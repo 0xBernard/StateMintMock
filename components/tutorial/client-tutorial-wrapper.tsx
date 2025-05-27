@@ -5,7 +5,7 @@ import { getTutorialSteps } from '@/lib/tutorial/enhanced-config';
 
 interface ClientTutorialWrapperProps {
   children: React.ReactNode;
-  mode?: 'full' | 'quick' | 'demo';
+  mode?: 'full' | 'demo';
 }
 
 export function ClientTutorialWrapper({ 
