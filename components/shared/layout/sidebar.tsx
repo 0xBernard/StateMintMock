@@ -7,11 +7,14 @@ import { useAuth } from '@/lib/context/auth-context';
 import { usePortfolio } from '@/lib/context/portfolio-context';
 import { useFinancial } from '@/lib/context/financial-context';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal } from '@/components/ui/dialog';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Loader2, CreditCard, Building2, ChevronRight, Wallet, QrCode, Copy, ExternalLink } from 'lucide-react';
+import { useTutorial } from '@/lib/tutorial/ephemeral-provider';
+import { useEffect } from 'react';
 
 type MenuItem = {
   name: string;
@@ -65,6 +68,7 @@ export function Sidebar() {
   const { user } = useAuth();
   const { getPortfolioValue, getUnrealizedPL } = usePortfolio();
   const { availableBalance, deposit } = useFinancial();
+  const { state, dispatch, currentStep } = useTutorial();
   const pathname = usePathname();
   const [showFundsDialog, setShowFundsDialog] = React.useState(false);
   const [isDepositing, setIsDepositing] = React.useState(false);
@@ -79,19 +83,90 @@ export function Sidebar() {
     portfolioValue - unrealizedPL
   );
 
-  const handleDeposit = () => {
+  // Add debugging and auto-advancement for tutorial steps
+  useEffect(() => {
+    console.log('[Sidebar] Tutorial state changed:', {
+      isActive: state.isActive,
+      currentStepId: currentStep?.id,
+      showFundsDialog,
+      selectedMethod
+    });
+
+    // Auto-advance if dialog is open but tutorial is still on add-funds-button
+    if (state.isActive && currentStep?.id === 'add-funds-button' && showFundsDialog) {
+      console.log('[Sidebar] Dialog is open but tutorial stuck on add-funds-button - auto-advancing');
+      setTimeout(() => {
+        dispatch({ type: 'NEXT_STEP' });
+      }, 500);
+    }
+
+    // Auto-advance if payment method is selected but tutorial is still on select-payment-method
+    if (state.isActive && currentStep?.id === 'select-payment-method' && selectedMethod && showFundsDialog) {
+      console.log('[Sidebar] Payment method selected but tutorial stuck on select-payment-method - auto-advancing');
+      setTimeout(() => {
+        dispatch({ type: 'NEXT_STEP' });
+      }, 500);
+    }
+  }, [state.isActive, currentStep?.id, showFundsDialog, selectedMethod, dispatch]);
+
+  const handleDeposit = async () => {
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0 || !selectedMethod) return;
     
     setIsDepositing(true);
     // Simulate deposit processing
-    setTimeout(() => {
-      deposit(amount);
-      setIsDepositing(false);
-      setShowFundsDialog(false);
-      setDepositAmount('');
-      setSelectedMethod(null);
-    }, 1500);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    deposit(amount);
+    setIsDepositing(false);
+
+    // Advance tutorial if we're on the add-funds-dialog-opened step
+    if (currentStep?.id === 'add-funds-dialog-opened') {
+      console.log('[Sidebar] Deposit completed during tutorial - advancing step');
+      setTimeout(() => {
+        dispatch({ type: 'NEXT_STEP' });
+      }, 500); // Small delay to let the UI update
+    }
+
+    // Delay closing the dialog to allow tutorial to advance if needed
+    await new Promise(resolve => setTimeout(resolve, 250));
+
+    setShowFundsDialog(false);
+    setDepositAmount('');
+    setSelectedMethod(null);
+  };
+
+  // Update the dialog change handler to advance when dialog opens
+  const handleDialogChange = (open: boolean) => {
+    console.log('[Sidebar] handleDialogChange called. Open:', open, 'Current step:', currentStep?.id);
+
+    // For preventing dialog closure during tutorial
+    if (!open && (currentStep?.id === 'select-payment-method' || currentStep?.id === 'add-funds-dialog-opened')) {
+      console.log(`[Sidebar] Attempted to close Add Funds dialog during tutorial step ${currentStep.id}. Preventing.`);
+      return;
+    }
+    
+    setShowFundsDialog(open);
+    
+    // Advance tutorial when dialog opens if we're on the add-funds-button step
+    if (open && currentStep?.id === 'add-funds-button') {
+      console.log('[Sidebar] Dialog opened during add-funds-button step - advancing to select-payment-method');
+      setTimeout(() => {
+        dispatch({ type: 'NEXT_STEP' });
+      }, 300);
+    }
+  };
+
+  // Add handler for when payment method is selected
+  const handlePaymentMethodSelect = (method: 'card' | 'bank' | 'usdc' | null) => {
+    setSelectedMethod(method);
+    
+    // Advance tutorial if we're on the select-payment-method step and a method was selected
+    if (currentStep?.id === 'select-payment-method' && method !== null) {
+      console.log('[Sidebar] Payment method selected during tutorial - advancing to add-funds-dialog-opened');
+      setTimeout(() => {
+        dispatch({ type: 'NEXT_STEP' });
+      }, 500); // Slightly longer delay to let the UI update
+    }
   };
 
   const handleCopyAddress = () => {
@@ -122,6 +197,13 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   onClick={(e) => handleNavClick(e, item.enabled)}
+                  data-tutorial-id={
+                    item.name === 'My Portfolio' 
+                      ? 'portfolio-link' 
+                      : item.name === 'Marketplace'
+                        ? 'marketplace-link'
+                        : undefined
+                  }
                   className={cn(
                     'flex items-center px-3 py-2 text-sm font-medium rounded-md',
                     isActive
@@ -154,6 +236,7 @@ export function Sidebar() {
             <Button 
               className="w-full bg-amber-600 hover:bg-amber-500 text-black font-semibold"
               onClick={() => setShowFundsDialog(true)}
+              data-tutorial-id="add-funds-button"
             >
               Add Funds
             </Button>
@@ -173,8 +256,30 @@ export function Sidebar() {
       )}
 
       {/* Add Funds Dialog */}
-      <Dialog open={showFundsDialog} onOpenChange={setShowFundsDialog}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog 
+        open={showFundsDialog} 
+        onOpenChange={handleDialogChange}
+      >
+        <DialogContent 
+          className="fixed z-[1000000] left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] sm:max-w-md w-[90vw] bg-black border border-border" 
+          data-tutorial-id="add-funds-dialog"
+          onPointerDownOutside={(e) => {
+            // Prevent closing on outside click during tutorial
+            const currentStepId = currentStep?.id;
+            if (currentStepId === 'add-funds-dialog' || currentStepId === 'add-funds-dialog-opened') {
+              e.preventDefault();
+              console.log(`[Sidebar] Preventing dialog close on outside click during ${currentStepId}`);
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            // Prevent closing on escape key during tutorial
+            const currentStepId = currentStep?.id;
+            if (currentStepId === 'add-funds-dialog' || currentStepId === 'add-funds-dialog-opened') {
+              e.preventDefault();
+              console.log(`[Sidebar] Preventing dialog close on escape key during ${currentStepId}`);
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Add Funds to StateMint</DialogTitle>
           </DialogHeader>
@@ -187,7 +292,7 @@ export function Sidebar() {
                 <Button
                   variant="outline"
                   className="w-full justify-between h-auto py-4 px-4"
-                  onClick={() => setSelectedMethod('card')}
+                  onClick={() => handlePaymentMethodSelect('card')}
                 >
                   <div className="flex items-center gap-3">
                     <CreditCard className="h-5 w-5" />
@@ -201,7 +306,7 @@ export function Sidebar() {
                 <Button
                   variant="outline"
                   className="w-full justify-between h-auto py-4 px-4"
-                  onClick={() => setSelectedMethod('bank')}
+                  onClick={() => handlePaymentMethodSelect('bank')}
                 >
                   <div className="flex items-center gap-3">
                     <Building2 className="h-5 w-5" />
@@ -215,7 +320,7 @@ export function Sidebar() {
                 <Button
                   variant="outline"
                   className="w-full justify-between h-auto py-4 px-4"
-                  onClick={() => setSelectedMethod('usdc')}
+                  onClick={() => handlePaymentMethodSelect('usdc')}
                 >
                   <div className="flex items-center gap-3">
                     <Wallet className="h-5 w-5" />
@@ -274,7 +379,7 @@ export function Sidebar() {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => setSelectedMethod(null)}
+                    onClick={() => handlePaymentMethodSelect(null)}
                   >
                     Back to Payment Methods
                   </Button>
@@ -343,9 +448,10 @@ export function Sidebar() {
 
                 <div className="space-y-2">
                   <Button 
-                    className="w-full bg-amber-600 hover:bg-amber-500 text-black font-semibold"
+                    className="w-full bg-amber-600 hover:bg-amber-500 text-black font-semibold tutorial-interactive-element"
                     onClick={handleDeposit}
                     disabled={isDepositing || !depositAmount || parseFloat(depositAmount) <= 0}
+                    data-tutorial-id="confirm-deposit"
                   >
                     {isDepositing ? (
                       <>
@@ -359,7 +465,7 @@ export function Sidebar() {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => setSelectedMethod(null)}
+                    onClick={() => handlePaymentMethodSelect(null)}
                     disabled={isDepositing}
                   >
                     Back to Payment Methods

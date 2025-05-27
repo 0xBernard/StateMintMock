@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/context/auth-context';
 import { usePortfolio } from '@/lib/context/portfolio-context';
 import { useFinancial } from '@/lib/context/financial-context';
 import { useMarket } from '@/lib/context/market-context';
+import { useTutorial } from '@/lib/tutorial/ephemeral-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,15 +28,36 @@ export function CoinDetail({ coin }: CoinDetailProps) {
   const { user } = useAuth();
   const { holdings, addShares, removeShares } = usePortfolio();
   const { availableBalance, withdraw, addTransaction } = useFinancial();
-  const { getAvailableShares, purchaseShares, addUserListing } = useMarket();
+  const { getAvailableShares, getUserListings, purchaseShares, addUserListing, editUserListing } = useMarket();
+  const { state, dispatch, currentStep } = useTutorial();
   const [tradeType, setTradeType] = React.useState<'buy' | 'sell'>('buy');
   const [shares, setShares] = React.useState('');
   const [listingPrice, setListingPrice] = React.useState('');
   const [futureSellPrice, setFutureSellPrice] = React.useState('');
+  const [editingListing, setEditingListing] = React.useState<{ price: number; newPrice: string } | null>(null);
+  const [activeTab, setActiveTab] = React.useState('orderbook');
 
   const userHolding = holdings.find(h => h.coinId === coin.id);
   const sharesOwned = userHolding?.shares || 0;
   const availableShares = getAvailableShares(coin.id);
+  const userListings = getUserListings(coin.id);
+
+  // Tutorial-driven tab switching
+  React.useEffect(() => {
+    if (!state.isActive || !currentStep) return;
+
+    switch (currentStep.id) {
+      case 'coin-detail-overview':
+        setActiveTab('orderbook');
+        break;
+      case 'coin-history-tab-highlight':
+        setActiveTab('history');
+        break;
+      case 'coin-details-tab-highlight':
+        setActiveTab('details');
+        break;
+    }
+  }, [state.isActive, currentStep?.id]);
 
   // Calculate purchase breakdown when buying
   const purchaseBreakdown = React.useMemo(() => {
@@ -45,21 +67,40 @@ export function CoinDetail({ coin }: CoinDetailProps) {
     }
     
     const parsedShares = parseInt(shares);
+    
+    // Check if there are any available shares
+    if (!availableShares || availableShares.length === 0) {
+      console.log('No available shares for purchase breakdown');
+      return null;
+    }
+    
+    // Filter out user's own listings from available shares
+    const purchasableShares = availableShares.filter(share => !share.isUserListing);
+    
+    if (purchasableShares.length === 0) {
+      console.log('No purchasable shares (all are user listings)');
+      return null;
+    }
+    
     console.log('Calculating purchase breakdown:', { 
-      availableShares: JSON.stringify(availableShares), 
+      availableShares: JSON.stringify(purchasableShares), 
       parsedShares,
-      availableSharesLength: availableShares.length 
+      availableSharesLength: purchasableShares.length 
     });
     
-    const result = calculatePurchaseBreakdown(availableShares, parsedShares);
+    const result = calculatePurchaseBreakdown(purchasableShares, parsedShares);
     console.log('Purchase breakdown calculation result:', JSON.stringify(result, null, 2));
     return result;
   }, [tradeType, shares, availableShares]);
 
-  // Format market price display
+  // Format market price display - use lowest available price if available
   const formattedMarketPrice = React.useMemo(() => {
+    if (availableShares && availableShares.length > 0) {
+      const lowestPrice = Math.min(...availableShares.map(share => share.price));
+      return formatCurrency(lowestPrice);
+    }
     return formatCurrency(coin.market.currentMarketPrice);
-  }, [coin.market.currentMarketPrice]);
+  }, [availableShares, coin.market.currentMarketPrice]);
 
   // Format shares sold percentage
   const formattedSharesSoldPercentage = React.useMemo(() => {
@@ -252,6 +293,20 @@ export function CoinDetail({ coin }: CoinDetailProps) {
     if (tradeType === 'buy' && purchaseBreakdown) {
       const totalCost = purchaseBreakdown.totalCost * 1.005; // Including 0.5% fee
       
+      // Check if there are enough shares available (excluding user's own listings)
+      const purchasableShares = availableShares.filter(share => !share.isUserListing);
+      const totalAvailableShares = purchasableShares.reduce((sum, listing) => sum + listing.quantity, 0);
+      const requestedShares = parseInt(shares);
+      
+      if (requestedShares > totalAvailableShares) {
+        toast({
+          variant: "destructive",
+          title: "Insufficient shares available",
+          description: `Only ${totalAvailableShares} shares are available for purchase (excluding your own listings).`
+        });
+        return;
+      }
+      
       // Try to withdraw the funds
       const success = withdraw(totalCost);
       if (!success) {
@@ -264,12 +319,18 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       }
 
       // Execute the purchase
-      const purchase = purchaseShares(coin.id, parseInt(shares), Number.MAX_VALUE);
+      const purchase = purchaseShares(coin.id, requestedShares, Number.MAX_VALUE);
       if (!purchase?.success) {
         toast({
           variant: "destructive",
           title: "Purchase failed",
           description: "The requested shares are no longer available at this price."
+        });
+        // Refund the withdrawn amount since purchase failed
+        addTransaction({
+          type: 'deposit',
+          amount: totalCost,
+          details: 'Refund for failed purchase'
         });
         return;
       }
@@ -277,7 +338,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       // Add shares to portfolio
       addShares(
         coin.id,
-        parseInt(shares),
+        requestedShares,
         purchase.averagePrice, // Use the actual purchase price from the executed trade
         futureSellPrice ? parseFloat(futureSellPrice) : null
       );
@@ -292,8 +353,23 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       // If user wants to list these shares after purchase
       if (futureSellPrice) {
         const numPrice = parseFloat(futureSellPrice);
+        const sharesToList = parseInt(shares);
+        
+        // Check if the user will have enough shares to list after this purchase
+        const currentShares = userHolding?.shares || 0;
+        const totalSharesAfterPurchase = currentShares + sharesToList;
+        
+        if (sharesToList > totalSharesAfterPurchase) {
+          toast({
+            variant: "destructive",
+            title: "Invalid listing quantity",
+            description: "You cannot list more shares than you will own after this purchase"
+          });
+          return;
+        }
+        
         if (!validateListingPrice(futureSellPrice)) {
-          addUserListing(coin.id, numPrice, parseInt(shares));
+          addUserListing(coin.id, numPrice, sharesToList);
         }
       }
 
@@ -306,6 +382,11 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       setShares('');
       setListingPrice('');
       setFutureSellPrice('');
+
+      // Advance tutorial step if we're on the purchase-widget-highlight step
+      if (state.isActive && currentStep?.id === 'purchase-widget-highlight') {
+        dispatch({ type: 'NEXT_STEP' });
+      }
     } else if (tradeType === 'sell') {
       const priceError = validateListingPrice(listingPrice);
       if (priceError) {
@@ -347,7 +428,43 @@ export function CoinDetail({ coin }: CoinDetailProps) {
         title: "Shares listed",
         description: `${numShares} shares listed at $${numPrice.toFixed(2)}`
       });
+
+      // Advance tutorial step if we're on the purchase-widget-highlight step
+      if (state.isActive && currentStep?.id === 'purchase-widget-highlight') {
+        dispatch({ type: 'NEXT_STEP' });
+      }
     }
+  };
+
+  // Handle editing a user listing
+  const handleEditListing = (oldPrice: number, newPrice: string) => {
+    const numNewPrice = parseFloat(newPrice);
+    if (isNaN(numNewPrice) || numNewPrice <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Invalid price",
+        description: "Please enter a valid price greater than 0"
+      });
+      return;
+    }
+
+    const success = editUserListing(coin.id, oldPrice, numNewPrice);
+    if (success) {
+      setEditingListing(null);
+      toast({
+        title: "Listing updated",
+        description: `Price changed from $${oldPrice.toFixed(2)} to $${numNewPrice.toFixed(2)}`
+      });
+
+      // Advance tutorial step if we're on the purchase-widget-highlight step
+      if (state.isActive && currentStep?.id === 'purchase-widget-highlight') {
+        dispatch({ type: 'NEXT_STEP' });
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingListing(null);
   };
 
   return (
@@ -397,7 +514,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
               <CardHeader className="p-4">
                 <CardDescription>Shares Sold</CardDescription>
                 <CardTitle className="text-2xl">
-                  {coin.soldShares.toLocaleString()} ({formattedSharesSoldPercentage}%)
+                  {coin.soldShares.toLocaleString()} ({formattedSharesSoldPercentage})
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -408,43 +525,77 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       {/* Trading Interface */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <Tabs defaultValue="orderbook" className="w-full">
+          <Tabs defaultValue="orderbook" className="w-full" value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              <TabsTrigger value="orderbook">Order Book</TabsTrigger>
-              <TabsTrigger value="history">Trade History</TabsTrigger>
-              <TabsTrigger value="details">Coin Details</TabsTrigger>
+              <TabsTrigger value="orderbook" data-tutorial-id="order-book-tab-button">Order Book</TabsTrigger>
+              <TabsTrigger value="history" data-tutorial-id="history-tab-button">Trade History</TabsTrigger>
+              <TabsTrigger value="details" data-tutorial-id="details-tab-button">Coin Details</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="orderbook" className="space-y-4">
+            <TabsContent value="orderbook" data-tutorial-id="order-book-content-area" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ArrowUpRight className="h-5 w-5 text-red-500" />
-                    Available Shares
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <ArrowUpRight className="h-5 w-5 text-red-500" />
+                      Available Shares
+                    </CardTitle>
+                    <div className="text-sm text-muted-foreground">
+                      Total: {availableShares.reduce((sum, listing) => sum + listing.quantity, 0)} shares
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {availableShares
-                      .sort((a, b) => a.price - b.price)
-                      .map((listing, i) => (
-                        <div key={i} className="flex justify-between text-sm">
-                          <span className="text-red-500">{formatCurrency(listing.price)}</span>
-                          <span>{listing.quantity} shares</span>
-                          <span className={cn(
-                            "text-muted-foreground",
-                            listing.isUserListing && "text-amber-500"
+                    {/* Header row */}
+                    <div className="flex justify-between text-sm font-medium text-muted-foreground border-b border-border pb-2">
+                      <span className="flex-1">Price</span>
+                      <span className="flex-1 text-center">Quantity</span>
+                      <span className="flex-1 text-right">Source</span>
+                    </div>
+                    {/* Data rows */}
+                    {availableShares && availableShares.length > 0 ? (
+                      availableShares
+                        .sort((a, b) => a.price - b.price)
+                        .map((listing, i) => (
+                          <div key={i} className={cn(
+                            "flex justify-between items-center text-sm py-1",
+                            listing.isUserListing && "bg-amber-950/20 border border-amber-600/30 rounded px-2"
                           )}>
-                            {listing.isOriginalShares ? 'Platform' : listing.isUserListing ? 'Your Listing' : 'User'}
-                          </span>
-                        </div>
-                      ))}
+                            <span className="flex-1 text-red-500 font-medium">{formatCurrency(listing.price)}</span>
+                            <span className="flex-1 text-center">{listing.quantity} shares</span>
+                            <span className={cn(
+                              "flex-1 text-right",
+                              listing.isUserListing ? "text-amber-500" : "text-muted-foreground"
+                            )}>
+                              {listing.isOriginalShares ? 'Platform' : listing.isUserListing ? 'Your Listing' : 'User'}
+                              {listing.isUserListing && (
+                                <span className="text-xs block text-amber-400/70">(Cannot purchase)</span>
+                              )}
+                            </span>
+                          </div>
+                        ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        {availableShares && availableShares.length > 0 && availableShares.every(share => share.isUserListing) ? (
+                          <>
+                            <p>All available shares are your own listings</p>
+                            <p className="text-sm mt-1">You cannot purchase your own shares</p>
+                          </>
+                        ) : (
+                          <>
+                            <p>No shares currently available for purchase</p>
+                            <p className="text-sm mt-1">Check back later or list your shares for sale</p>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="history">
+            <TabsContent value="history" data-tutorial-id="history-content-area">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -465,7 +616,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="details">
+            <TabsContent value="details" data-tutorial-id="details-content-area">
               <Card>
                 <CardContent className="pt-6">
                   <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -501,7 +652,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
         </div>
 
         <div>
-          <Card>
+          <Card data-tutorial-id="buy-widget-container">
             <CardHeader>
               <CardTitle>Trade {coin.name}</CardTitle>
               {!user && (
@@ -637,12 +788,71 @@ export function CoinDetail({ coin }: CoinDetailProps) {
                   type="submit"
                   className="w-full"
                   disabled={!user || !shares || (tradeType === 'sell' && !listingPrice) || (tradeType === 'buy' && !purchaseBreakdown)}
+                  data-tutorial-id="confirm-purchase-button"
                 >
                   {tradeType === 'buy' 
                     ? `Buy ${shares} Shares` 
                     : `List ${shares} Shares for Sale`}
                 </Button>
               </form>
+
+              {/* User's Active Listings */}
+              {user && userListings.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-border">
+                  <h3 className="text-lg font-semibold mb-4">Your Active Listings</h3>
+                  <div className="space-y-2">
+                    {userListings.map((listing, i) => (
+                      <div key={i} className="flex justify-between items-center p-3 bg-secondary/30 rounded-lg">
+                        <div>
+                          <span className="font-medium">{listing.quantity} shares</span>
+                          {editingListing?.price === listing.price ? (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-sm text-muted-foreground">New price:</span>
+                              <div className="relative">
+                                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                                <Input
+                                  type="text"
+                                  value={editingListing.newPrice}
+                                  onChange={(e) => setEditingListing({ ...editingListing, newPrice: e.target.value })}
+                                  className="w-24 pl-6 h-8"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => handleEditListing(listing.price, editingListing.newPrice)}
+                                className="h-8"
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleCancelEdit}
+                                className="h-8"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground ml-2">at {formatCurrency(listing.price)}</span>
+                          )}
+                        </div>
+                        {editingListing?.price !== listing.price && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingListing({ price: listing.price, newPrice: listing.price.toFixed(2) })}
+                            className="text-amber-500 hover:text-amber-400 hover:bg-amber-950/50"
+                          >
+                            Edit Price
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

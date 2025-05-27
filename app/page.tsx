@@ -3,15 +3,26 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { useTutorial } from '@/lib/context/tutorial-context';
+import { useTutorial } from '@/lib/tutorial/ephemeral-provider';
 
 export default function Home() {
   const router = useRouter();
-  const { mode, setMode } = useTutorial();
+  const { dispatch } = useTutorial();
 
   const handleModeSelect = (selectedMode: 'demo' | 'tutorial') => {
-    setMode(selectedMode);
-    router.push('/marketplace');
+    if (selectedMode === 'tutorial') {
+      console.log('Tutorial mode selected, navigating to marketplace...');
+      // First navigate to marketplace
+      router.push('/marketplace');
+      
+      // Start the tutorial after a delay to ensure the page has fully loaded
+      setTimeout(() => {
+        console.log('Starting tutorial...');
+        dispatch({ type: 'START_TUTORIAL' }); // Start at the first step
+      }, 2000);
+    } else {
+      router.push('/marketplace');
+    }
   };
 
   return (
@@ -33,7 +44,7 @@ export default function Home() {
             className="object-contain"
             priority
           />
-              </div>
+        </div>
 
         {/* Tagline */}
         <p className="text-white text-3xl font-light tracking-wide">
@@ -47,18 +58,20 @@ export default function Home() {
           </p>
           <div className="flex justify-center gap-4">
             <Button
-              variant={mode === 'demo' ? 'default' : 'outline'}
+              variant="outline"
               size="lg"
               onClick={() => handleModeSelect('demo')}
-              className={mode === 'demo' ? 'bg-amber-600 hover:bg-amber-500 text-black' : 'text-amber-400 border-amber-400/20 hover:bg-amber-400/10'}
+              className="text-amber-400 border-amber-400/20 hover:bg-amber-400/10"
+              data-tutorial-id="demo-mode-button"
             >
               Demo Mode
             </Button>
             <Button
-              variant={mode === 'tutorial' ? 'default' : 'outline'}
+              variant="default"
               size="lg"
               onClick={() => handleModeSelect('tutorial')}
-              className={mode === 'tutorial' ? 'bg-amber-600 hover:bg-amber-500 text-black' : 'text-amber-400 border-amber-400/20 hover:bg-amber-400/10'}
+              className="bg-amber-600 hover:bg-amber-500 text-black"
+              data-tutorial-id="tutorial-mode-button"
             >
               Tutorial Mode
             </Button>

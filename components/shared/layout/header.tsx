@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/auth-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,25 +18,33 @@ import { LogOut } from 'lucide-react';
 import { LoginDialog } from '@/components/auth/login-dialog';
 
 const navigation = [
-  { name: 'Marketplace', href: '/marketplace', current: true, enabled: true },
-  { name: 'Portfolio', href: '/portfolio', current: false, enabled: true },
-  { name: 'Explore', href: '/explore', current: false, enabled: false },
-  { name: 'Learn', href: '/learn', current: false, enabled: false },
-  { name: 'Community', href: '/community', current: false, enabled: false },
+  { name: 'Marketplace', href: '/marketplace', enabled: true },
+  { name: 'Portfolio', href: '/portfolio', enabled: true },
+  { name: 'Explore', href: '/explore', enabled: false },
+  { name: 'Learn', href: '/learn', enabled: false },
+  { name: 'Community', href: '/community', enabled: false },
 ];
 
 export function Header() {
   const { isAuthenticated, user, logout, setShowLoginDialog } = useAuth();
+  const pathname = usePathname();
 
-  const handleNavClick = (e: React.MouseEvent, enabled: boolean) => {
+  const handleNavClick = (e: React.MouseEvent, enabled: boolean, href: string) => {
     if (!enabled) {
       e.preventDefault();
+      return;
+    }
+    
+    // If portfolio is clicked and user is not authenticated, show login dialog
+    if (href === '/portfolio' && !isAuthenticated) {
+      e.preventDefault();
+      setShowLoginDialog(true);
     }
   };
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-border">
+      <header className="fixed top-0 left-0 right-0 z-[var(--z-header)] bg-black border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
@@ -48,20 +57,23 @@ export function Header() {
             </div>
 
             <nav className="hidden md:flex items-center space-x-8">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={(e) => handleNavClick(e, item.enabled)}
-                  className={`text-sm font-medium ${
-                    item.current
-                      ? 'text-amber-400 border-b-2 border-amber-400'
-                      : 'text-muted-foreground hover:text-amber-400'
-                  } ${!item.enabled && 'cursor-default opacity-50'}`}
-                >
-                  {item.name}
-                </Link>
-              ))}
+              {navigation.map((item) => {
+                const isActive = pathname === item.href || (item.href === '/marketplace' && pathname.startsWith('/coin/'));
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={(e) => handleNavClick(e, item.enabled, item.href)}
+                    className={`text-sm font-medium ${
+                      isActive
+                        ? 'text-amber-400 border-b-2 border-amber-400'
+                        : 'text-muted-foreground hover:text-amber-400'
+                    } ${!item.enabled && 'cursor-default opacity-50'}`}
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
             </nav>
 
             <div className="flex items-center space-x-4">
@@ -77,7 +89,11 @@ export function Header() {
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Button 
+                      variant="ghost" 
+                      className="relative h-8 w-8 rounded-full"
+                      data-tutorial-id="user-profile"
+                    >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user?.avatarUrl} alt={user?.name} />
                         <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
@@ -102,7 +118,8 @@ export function Header() {
               ) : (
                 <Button
                   onClick={() => setShowLoginDialog(true)}
-                  className="bg-amber-600 hover:bg-amber-500 text-black font-semibold"
+                  className="bg-amber-600 hover:bg-amber-500 text-black font-semibold tutorial-interactive"
+                  data-tutorial-id="header-login-button"
                 >
                   Log in
                 </Button>

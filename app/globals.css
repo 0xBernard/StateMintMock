@@ -91,6 +91,23 @@
   --sidebar-accent-foreground: var(--white);
   --sidebar-border: var(--light-grey);
   --sidebar-ring: var(--gold);
+  
+  /* Base z-index values */
+  --z-base-content: 1;
+  --z-header: 1000;
+  --z-sticky-content: 999;
+  
+  /* Tutorial z-index layers - comprehensive hierarchy */
+  --z-tutorial-backdrop: 2000;
+  --z-tutorial-highlight: 2001;
+  --z-tutorial-target: 2002;
+  --z-tutorial-prompt: 1000001;
+  --z-tutorial-interactive: 2004;
+  
+  /* Tutorial colors */
+  --tutorial-overlay-color: rgba(0, 0, 0, 0.75);
+  --tutorial-highlight-color: rgba(242, 180, 24, 0.2);
+  --tutorial-border-color: var(--primary);
 }
 
 .dark {
@@ -137,5 +154,160 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Tutorial System Styles */
+.tutorial-active {
+  overflow: hidden;
+}
+
+/* Tutorial Backdrop - blocks all interactions except tutorial elements */
+.tutorial-backdrop {
+  position: fixed !important;
+  background-color: var(--tutorial-overlay-color) !important;
+  z-index: var(--z-tutorial-backdrop) !important;
+  pointer-events: auto !important;
+}
+
+/* Tutorial Backdrop Transparent - allows interactions through */
+.tutorial-backdrop-transparent {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: transparent !important;
+  z-index: var(--z-tutorial-backdrop) !important;
+  pointer-events: auto !important;
+}
+
+/* Tutorial Target Highlight */
+.tutorial-highlight {
+  position: fixed !important;
+  border: 4px solid var(--tutorial-border-color) !important;
+  border-radius: 8px !important;
+  background-color: var(--tutorial-highlight-color) !important;
+  z-index: var(--z-tutorial-highlight) !important;
+  pointer-events: none !important;
+  animation: tutorial-pulse 2s infinite !important;
+  box-shadow: 0 0 20px rgba(242, 180, 24, 0.5) !important;
+}
+
+/* Interactive Element Highlight - different animation */
+.tutorial-interactive-highlight {
+  animation: tutorial-interactive-pulse 2s infinite !important;
+  border-color: var(--tutorial-border-color) !important;
+  background-color: rgba(242, 180, 24, 0.15) !important;
+  box-shadow: 0 0 25px rgba(242, 180, 24, 0.7) !important;
+}
+
+/* Tutorial Target Element - made interactive and elevated */
+.tutorial-target {
+  position: relative !important;
+  z-index: var(--z-tutorial-target) !important;
+  pointer-events: auto !important;
+}
+
+/* Tutorial Interactive Elements */
+.tutorial-interactive {
+  position: relative !important;
+  z-index: var(--z-tutorial-interactive) !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Tutorial Prompt Container */
+.tutorial-prompt-container {
+  position: fixed !important;
+  z-index: var(--z-tutorial-prompt) !important;
+  pointer-events: none !important;
+}
+
+/* Tutorial Prompt */
+.tutorial-prompt {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  padding: 24px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+  max-width: 400px !important;
+  width: auto !important;
+  pointer-events: auto !important;
+  z-index: var(--z-tutorial-prompt) !important;
+}
+
+/* Tutorial Portal Containers */
+#tutorial-root {
+  position: fixed !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: var(--z-tutorial-backdrop) !important;
+}
+
+/* Portfolio blocking overlay for add-funds step */
+.tutorial-portfolio-blocker {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}
+
+/* Add funds step full overlay - highest priority */
+.tutorial-add-funds-full-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+
+/* Hide Radix dialog overlay during tutorial */
+[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] {
+  display: none !important;
+}
+
+/* Animations */
+@keyframes tutorial-pulse {
+  0% { 
+    border-color: var(--tutorial-border-color);
+    box-shadow: 0 0 10px rgba(242, 180, 24, 0.3);
+    transform: scale(1);
+  }
+  50% { 
+    border-color: var(--tutorial-border-color);
+    box-shadow: 0 0 20px rgba(242, 180, 24, 0.6);
+    transform: scale(1.02);
+  }
+  100% { 
+    border-color: var(--tutorial-border-color);
+    box-shadow: 0 0 10px rgba(242, 180, 24, 0.3);
+    transform: scale(1);
+  }
+}
+
+@keyframes tutorial-interactive-pulse {
+  0% { 
+    border-color: var(--tutorial-border-color);
+    box-shadow: 0 0 15px rgba(242, 180, 24, 0.4);
+    transform: scale(1);
+  }
+  50% { 
+    border-color: #fbbf24;
+    box-shadow: 0 0 30px rgba(242, 180, 24, 0.8);
+    transform: scale(1.05);
+  }
+  100% { 
+    border-color: var(--tutorial-border-color);
+    box-shadow: 0 0 15px rgba(242, 180, 24, 0.4);
+    transform: scale(1);
   }
 }

@@ -40,6 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [showLoginDialog, setShowLoginDialog] = useState(false)
 
+  // Debug function to log when login dialog state changes
+  const setShowLoginDialogDebug = (show: boolean) => {
+    console.log('setShowLoginDialog called:', show)
+    setShowLoginDialog(show)
+  }
+
   const login = () => {
     setIsAuthenticated(true)
     setUser(mockUser)
@@ -62,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, 
       logout,
       showLoginDialog,
-      setShowLoginDialog
+      setShowLoginDialog: setShowLoginDialogDebug
     }}>
       {children}
     </AuthContext.Provider>

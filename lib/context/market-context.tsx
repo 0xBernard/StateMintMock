@@ -15,7 +15,9 @@ interface MarketState {
 
 interface MarketContextType {
   getAvailableShares: (coinId: string) => ShareListing[];
+  getUserListings: (coinId: string) => ShareListing[];
   addUserListing: (coinId: string, price: number, quantity: number) => void;
+  editUserListing: (coinId: string, oldPrice: number, newPrice: number) => boolean;
   purchaseShares: (coinId: string, quantity: number, maxPrice: number) => {
     success: boolean;
     breakdown: { price: number; quantity: number; subtotal: number }[];
@@ -68,6 +70,10 @@ export function MarketProvider({ children }: { children: ReactNode }) {
     return marketState[coinId]?.availableShares || [];
   };
 
+  const getUserListings = (coinId: string) => {
+    return marketState[coinId]?.userListings || [];
+  };
+
   const addUserListing = (coinId: string, price: number, quantity: number) => {
     setMarketState(prev => {
       const newState = { ...prev };
@@ -106,6 +112,27 @@ export function MarketProvider({ children }: { children: ReactNode }) {
 
       return newState;
     });
+  };
+
+  const editUserListing = (coinId: string, oldPrice: number, newPrice: number) => {
+    setMarketState(prev => {
+      const newState = { ...prev };
+      if (!newState[coinId]) {
+        return prev;
+      }
+
+      newState[coinId].availableShares = newState[coinId].availableShares.map(share =>
+        share.isUserListing && share.price === oldPrice ? { ...share, price: newPrice } : share
+      );
+
+      newState[coinId].userListings = newState[coinId].userListings.map(listing =>
+        listing.isUserListing && listing.price === oldPrice ? { ...listing, price: newPrice } : listing
+      );
+
+      return newState;
+    });
+    
+    return true;
   };
 
   const purchaseShares = (coinId: string, quantity: number, maxPrice: number) => {
@@ -181,7 +208,9 @@ export function MarketProvider({ children }: { children: ReactNode }) {
   return (
     <MarketContext.Provider value={{
       getAvailableShares,
+      getUserListings,
       addUserListing,
+      editUserListing,
       purchaseShares
     }}>
       {children}

@@ -41,7 +41,7 @@ export function CoinCard({
 
   return (
     <Card 
-      className="overflow-hidden bg-card border-border hover:border-amber-600/50 transition-colors cursor-pointer"
+      className="coin-card overflow-hidden bg-card border-border hover:border-amber-600/50 transition-colors cursor-pointer"
       onClick={handleCardClick}
     >
       <div className="relative aspect-[2/1] bg-black">

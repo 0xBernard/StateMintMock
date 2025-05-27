@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/auth-context';
 import { usePortfolio, ShareHolding } from '@/lib/context/portfolio-context';
+import { useTutorial } from '@/lib/tutorial/ephemeral-provider';
 import { coins } from '@/lib/data/coins';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowUpRight, ArrowDownRight, DollarSign } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, DollarSign, Lock } from 'lucide-react';
 import { Header } from '@/components/shared/layout/header';
 import { Sidebar } from '@/components/shared/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -26,19 +27,22 @@ function calculatePercentageChange(current: number, original: number) {
 }
 
 export default function PortfolioPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, setShowLoginDialog } = useAuth();
   const router = useRouter();
   const { holdings, getPortfolioValue, getUnrealizedPL } = usePortfolio();
+  const { state, dispatch, currentStep } = useTutorial();
+  const hasAdvancedRef = useRef(false);
 
+  // Auto-advance tutorial if we're on portfolio-navigation step and already on portfolio page
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/');
+    if (state.isActive && currentStep?.id === 'portfolio-navigation') {
+      console.log('Portfolio page loaded while on portfolio-navigation step - auto-advancing');
+      // Small delay to ensure the step is fully initialized
+      setTimeout(() => {
+        dispatch({ type: 'NEXT_STEP' });
+      }, 500);
     }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  }, [state.isActive, currentStep?.id, dispatch]);
 
   const portfolioValue = getPortfolioValue();
   const unrealizedPL = getUnrealizedPL();
@@ -47,6 +51,41 @@ export default function PortfolioPage() {
     portfolioValue - unrealizedPL
   );
 
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-background">
+        <Header />
+        <div className="flex">
+          <Sidebar />
+          <div className="flex-1 lg:pl-64">
+            <div className="pt-16">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+                  <div className="bg-amber-500/10 p-6 rounded-full">
+                    <Lock className="h-12 w-12 text-amber-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <h1 className="text-3xl font-bold text-amber-400">Portfolio Access Required</h1>
+                    <p className="text-lg text-muted-foreground max-w-md">
+                      Please sign in to view your portfolio and track your collectible investments.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowLoginDialog(true)}
+                    className="bg-amber-600 hover:bg-amber-500 text-black font-semibold px-8 py-3"
+                  >
+                    Sign In to View Portfolio
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-background">
       <Header />
@@ -54,15 +93,15 @@ export default function PortfolioPage() {
         <Sidebar />
         <div className="flex-1 lg:pl-64">
           <div className="pt-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-tutorial-id="portfolio-main-content-area">
               <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold text-amber-400">Portfolio</h1>
+                <h1 className="text-4xl font-bold text-amber-400" data-tutorial-id="portfolio-page-main-title">Portfolio</h1>
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-8" data-tutorial-id="portfolio-overview-section">
                 {/* Portfolio Summary */}
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Card>
+                <div className="grid gap-4 md:grid-cols-3" data-tutorial-id="portfolio-stats-summary">
+                  <Card data-tutorial-id="portfolio-value-stat">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Portfolio Value
@@ -76,7 +115,7 @@ export default function PortfolioPage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card data-tutorial-id="portfolio-performance-stat">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Unrealized P/L
@@ -94,7 +133,7 @@ export default function PortfolioPage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card data-tutorial-id="portfolio-holdings-count-stat">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Number of Holdings
@@ -110,7 +149,7 @@ export default function PortfolioPage() {
                 </div>
 
                 {/* Holdings List */}
-                <Card className="mt-8">
+                <Card className="mt-8" data-tutorial-id="portfolio-coin-list-section">
                   <CardHeader>
                     <CardTitle>Your Holdings</CardTitle>
                     <CardDescription>

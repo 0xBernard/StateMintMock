@@ -1,0 +1,162 @@
+/* Enhanced Tutorial Mode Styles */
+:root {
+  --tutorial-backdrop-color: rgba(0, 0, 0, 0.75);
+  --tutorial-highlight-color: rgba(242, 180, 24, 0.3);
+  --tutorial-border-color: rgb(242, 180, 24);
+  --tutorial-overlay-z: 9998;
+  --tutorial-prompt-z: 9999;
+  --tutorial-interactive-z: 10000;
+}
+
+/* Tutorial layer animations */
+.tutorial-layer {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.tutorial-layer.visible {
+  opacity: 1;
+}
+
+/* Enhanced tutorial prompt */
+.tutorial-prompt {
+  pointer-events: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(242, 180, 24, 0.3);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Golden border highlight animation */
+.tutorial-highlight-border {
+  pointer-events: none !important;
+}
+
+@keyframes tutorial-highlight-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(242, 180, 24, 0.5), inset 0 0 20px rgba(242, 180, 24, 0.1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.01);
+    box-shadow: 0 0 30px rgba(242, 180, 24, 0.7), inset 0 0 30px rgba(242, 180, 24, 0.2);
+  }
+}
+
+/* Highlight pulse animation for blocked interactions */
+.tutorial-highlight-pulse {
+  animation: tutorial-pulse 0.6s ease-in-out;
+  position: relative;
+}
+
+.tutorial-highlight-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid #f2b418;
+  border-radius: 6px;
+  animation: tutorial-ring-pulse 0.6s ease-in-out;
+  pointer-events: none;
+  z-index: 10001;
+}
+
+@keyframes tutorial-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes tutorial-ring-pulse {
+  0% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  100% { 
+    opacity: 0; 
+    transform: scale(1.1);
+  }
+}
+
+/* Tutorial highlighting */
+.tutorial-highlight {
+  position: relative;
+  animation: tutorialPulse 2s infinite;
+}
+
+.tutorial-spotlight-target {
+  box-shadow: 0 0 0 4px var(--tutorial-border-color),
+              0 0 20px rgba(242, 180, 24, 0.5) !important;
+  border-radius: 8px;
+}
+
+@keyframes tutorialPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(242, 180, 24, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(242, 180, 24, 0.1);
+  }
+}
+
+/* Smooth transitions between tutorial steps */
+.tutorial-layer {
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.tutorial-prompt {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Interactive elements during tutorial */
+[data-tutorial-elevated] {
+  position: relative !important;
+}
+
+/* Special elements that need to be interactive during tutorial */
+[data-tutorial-id="header-login-button"],
+[data-tutorial-id="portfolio-link"],
+[data-tutorial-id="marketplace-link"],
+[data-tutorial-id="add-funds-button"],
+[data-tutorial-id="confirm-deposit"],
+[data-tutorial-id="prompt-next-button"],
+button[aria-label="Continue with Google"],
+.google-auth-button,
+[data-testid="google-auth-button"],
+[role="dialog"] button {
+  position: relative !important;
+  z-index: var(--tutorial-interactive-z) !important;
+  pointer-events: auto !important;
+}
+
+/* Tutorial overlay improvements */
+.tutorial-overlay {
+  pointer-events: none;
+  transition: opacity 200ms ease-in-out;
+}
+
+/* Responsive tutorial prompts */
+@media (max-width: 768px) {
+  .tutorial-prompt {
+    max-width: 90vw;
+    margin: 0 1rem;
+  }
+}
+
+/* Dark mode support */
+.dark .tutorial-prompt {
+  background: rgba(30, 30, 30, 0.95);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced z-index management */
+.tutorial-elevated {
+  position: relative !important;
+  z-index: 10000 !important;
+}
+
+.tutorial-stacking-context {
+  position: relative !important;
+  z-index: 9999 !important;
+} 
