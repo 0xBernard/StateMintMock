@@ -2,9 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ gh-pages ]
   pull_request:
-    branches: [ main ]
+    branches: [ gh-pages ]
 
 jobs:
   build-and-deploy:
@@ -28,9 +28,12 @@ jobs:
       env:
         NODE_ENV: production
         
+    - name: Add .nojekyll file
+      run: touch out/.nojekyll
+        
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/gh-pages'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./out 
