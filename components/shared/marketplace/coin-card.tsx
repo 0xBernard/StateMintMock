@@ -57,11 +57,11 @@ export function CoinCard({
         </div>
       </div>
 
-      <CardContent className="p-4">
-        <h3 className="text-lg font-semibold text-amber-400 mb-1 truncate" title={name}>
+      <CardContent className="p-3 sm:p-4">
+        <h3 className="text-base sm:text-lg font-semibold text-amber-400 mb-1 truncate" title={name}>
           {name}
         </h3>
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2" title={description}>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 line-clamp-2" title={description}>
           {description}
         </p>
 
@@ -73,40 +73,40 @@ export function CoinCard({
             />
           </div>
           
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-amber-400/80">{soldPercentage.toFixed(1)}% funded</span>
             <span className="text-amber-400/80">{owners} investors</span>
           </div>
         </div>
 
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
           <div className="flex justify-between items-baseline">
-            <div className="text-sm text-muted-foreground">Current Price:</div>
-            <div className="text-lg font-bold text-amber-400">
+            <div className="text-xs sm:text-sm text-muted-foreground">Current Price:</div>
+            <div className="text-base sm:text-lg font-bold text-amber-400">
               {metrics.lowestAsk !== null ? formatSharePrice(metrics.lowestAsk) : formatSharePrice(market.currentMarketPrice)}
             </div>
           </div>
           <div className="flex justify-between items-baseline">
-            <div className="text-sm text-muted-foreground">Initial Price:</div>
-            <div className="text-sm text-amber-400/60">{formatSharePrice(market.initialSharePrice)}</div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Initial Price:</div>
+            <div className="text-xs sm:text-sm text-amber-400/60">{formatSharePrice(market.initialSharePrice)}</div>
           </div>
           {metrics.priceIncrease > 0 && (
-            <div className="flex justify-end text-sm text-green-500">
+            <div className="flex justify-end text-xs sm:text-sm text-green-500">
               {formatPriceChange(metrics.priceIncrease)}
             </div>
           )}
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <div className="text-sm text-amber-400/60">
+      <CardFooter className="p-3 sm:p-4 pt-0 flex justify-between items-center">
+        <div className="text-xs sm:text-sm text-amber-400/60">
           {metrics.availableShares} shares available
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           <Button 
             variant="outline" 
             size="sm"
-            className="border-amber-600/30 hover:border-amber-500 hover:bg-amber-950/50 text-amber-400"
+            className="border-amber-600/30 hover:border-amber-500 hover:bg-amber-950/50 text-amber-400 text-xs sm:text-sm px-2 sm:px-3"
             onClick={(e) => {
               e.stopPropagation();
               router.push(`/coin/${id}`);
@@ -116,7 +116,7 @@ export function CoinCard({
           </Button>
           <Button 
             size="sm"
-            className="bg-amber-600 hover:bg-amber-500 text-black font-semibold"
+            className="bg-amber-600 hover:bg-amber-500 text-black font-semibold text-xs sm:text-sm px-2 sm:px-3"
             onClick={(e) => {
               e.stopPropagation();
               router.push(`/coin/${id}?action=buy`);

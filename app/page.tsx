@@ -26,16 +26,16 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-black flex flex-col items-center justify-center text-center p-2">
-      <div className="space-y-8">
+    <main className="min-h-screen bg-black flex flex-col items-center justify-center text-center p-4 sm:p-6">
+      <div className="space-y-6 sm:space-y-8 w-full max-w-4xl">
         {/* Logo */}
-        <h1 className="text-8xl font-bold tracking-tight -mt-16">
+        <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold tracking-tight px-4">
           <span className="text-white">State</span>
           <span className="text-amber-400">Mint</span>
         </h1>
 
         {/* Icon */}
-        <div className="w-64 h-64 mx-auto relative">
+        <div className="w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 mx-auto relative">
           <Image
             src="/images/33759.png"
             alt="StateMint Logo"
@@ -47,21 +47,21 @@ export default function Home() {
         </div>
 
         {/* Tagline */}
-        <p className="text-white text-3xl font-light tracking-wide">
+        <p className="text-white text-lg sm:text-2xl lg:text-3xl font-light tracking-wide px-4 text-center">
           Fractional Collectible Marketplace
         </p>
 
         {/* Mode Selection */}
-        <div className="space-y-4">
-          <p className="text-white/70 text-xl tracking-wide">
+        <div className="space-y-4 px-4">
+          <p className="text-white/70 text-lg sm:text-xl tracking-wide">
             Demo Website
           </p>
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 max-w-sm sm:max-w-none mx-auto">
             <Button
               variant="outline"
               size="lg"
               onClick={() => handleModeSelect('demo')}
-              className="text-amber-400 border-amber-400/20 hover:bg-amber-400/10"
+              className="text-amber-400 border-amber-400/20 hover:bg-amber-400/10 w-full sm:w-auto"
               data-tutorial-id="demo-mode-button"
             >
               Demo Mode
@@ -70,7 +70,7 @@ export default function Home() {
               variant="default"
               size="lg"
               onClick={() => handleModeSelect('tutorial')}
-              className="bg-amber-600 hover:bg-amber-500 text-black"
+              className="bg-amber-600 hover:bg-amber-500 text-black w-full sm:w-auto"
               data-tutorial-id="tutorial-mode-button"
             >
               Tutorial Mode
@@ -79,8 +79,8 @@ export default function Home() {
         </div>
 
         {/* Seed Round */}
-        <div className="mt-24">
-          <p className="text-white/70 text-xl tracking-wide">
+        <div className="mt-12 sm:mt-16 px-4">
+          <p className="text-white/70 text-lg sm:text-xl tracking-wide">
             Seed Round <span className="text-amber-400">|</span> 2025
           </p>
         </div>

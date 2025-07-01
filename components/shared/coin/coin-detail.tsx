@@ -468,25 +468,25 @@ export function CoinDetail({ coin }: CoinDetailProps) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Coin Header */}
-      <div className="flex flex-col md:flex-row gap-8 items-start">
-        <div className="relative w-full md:w-96 aspect-[2/1] rounded-lg overflow-hidden bg-black/20">
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        <div className="relative w-full md:w-80 aspect-[2/1] rounded-lg overflow-hidden bg-black/20">
           <Image
             src={coin.image}
             alt={coin.name}
             fill
             className="object-contain"
-            sizes="(max-width: 768px) 100vw, 384px"
+            sizes="(max-width: 768px) 100vw, 320px"
           />
         </div>
         
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-4 sm:space-y-6">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold">{coin.name}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+              <h1 className="text-xl sm:text-3xl font-bold">{coin.name}</h1>
               <span className={cn(
-                "px-3 py-1 rounded-full text-xs font-semibold",
+                "px-3 py-1 rounded-full text-xs font-semibold w-fit",
                 coin.rarity === 'legendary' ? "bg-amber-500/20 text-amber-500" :
                 coin.rarity === 'rare' ? "bg-purple-500/20 text-purple-500" :
                 "bg-blue-500/20 text-blue-500"
@@ -494,30 +494,26 @@ export function CoinDetail({ coin }: CoinDetailProps) {
                 {coin.rarity.charAt(0).toUpperCase() + coin.rarity.slice(1)}
               </span>
             </div>
-            <p className="text-lg text-muted-foreground">{coin.description}</p>
+            <p className="text-sm sm:text-lg text-muted-foreground">{coin.description}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="p-4">
-                <CardDescription>Current Share Price</CardDescription>
-                <CardTitle className="text-2xl">{formattedMarketPrice}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="p-4">
-                <CardDescription>Total Shares</CardDescription>
-                <CardTitle className="text-2xl">{coin.totalShares.toLocaleString()}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="p-4">
-                <CardDescription>Shares Sold</CardDescription>
-                <CardTitle className="text-2xl">
-                  {coin.soldShares.toLocaleString()} ({formattedSharesSoldPercentage})
-                </CardTitle>
-              </CardHeader>
-            </Card>
+          {/* Compact Stats Row */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="bg-zinc-900/50 rounded-lg p-3 border border-amber-600/30">
+              <div className="text-xs sm:text-sm text-muted-foreground mb-1">Share Price</div>
+              <div className="text-sm sm:text-lg font-bold text-amber-400">{formattedMarketPrice}</div>
+            </div>
+            <div className="bg-zinc-900/50 rounded-lg p-3 border border-amber-600/30">
+              <div className="text-xs sm:text-sm text-muted-foreground mb-1">Total Shares</div>
+              <div className="text-sm sm:text-lg font-bold text-amber-400">{coin.totalShares.toLocaleString()}</div>
+            </div>
+            <div className="bg-zinc-900/50 rounded-lg p-3 border border-amber-600/30">
+              <div className="text-xs sm:text-sm text-muted-foreground mb-1">Shares Sold</div>
+              <div className="text-xs sm:text-base font-bold text-amber-400">
+                {coin.soldShares.toLocaleString()}
+              </div>
+              <div className="text-xs text-muted-foreground">({formattedSharesSoldPercentage})</div>
+            </div>
           </div>
         </div>
       </div>

@@ -94,7 +94,9 @@
   
   /* Base z-index values */
   --z-base-content: 1;
+  --z-sidebar: 900;
   --z-header: 1000;
+  --z-mobile-menu: 1100;
   --z-sticky-content: 999;
   
   /* Tutorial z-index layers - comprehensive hierarchy */
@@ -154,6 +156,13 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  html {
+    overflow-x: hidden;
   }
 }
 
@@ -309,5 +318,63 @@
     border-color: var(--tutorial-border-color);
     box-shadow: 0 0 15px rgba(242, 180, 24, 0.4);
     transform: scale(1);
+  }
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 1023px) {
+  /* Prevent horizontal scrolling on mobile */
+  body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+  
+  /* Ensure all containers respect viewport width */
+  * {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+  
+  /* Ensure mobile menu sheet has proper z-index */
+  [data-slot="sheet-content"] {
+    z-index: var(--z-mobile-menu) !important;
+  }
+  
+  /* Ensure mobile menu overlay has proper z-index */
+  [data-slot="sheet-overlay"] {
+    z-index: calc(var(--z-mobile-menu) - 1) !important;
+  }
+  
+  /* Improve touch targets on mobile */
+  .mobile-nav-item {
+    min-height: 44px;
+  }
+  
+  /* Better spacing for mobile cards */
+  .coin-card {
+    border-radius: 8px !important;
+  }
+  
+  /* Ensure adequate touch targets in header */
+  .header-mobile-action {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile marketplace optimizations */
+  [data-marketplace-header] {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  /* Reduce sticky header padding on mobile */
+  .sticky {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  /* Portfolio mobile constraints */
+  [data-tutorial-id="portfolio-stats-summary"] {
+    overflow-x: hidden !important;
   }
 }

@@ -183,7 +183,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-card fixed left-0 top-16 h-[calc(100vh-4rem)] p-6 border-r border-border hidden lg:block">
+    <aside className="w-64 bg-card fixed left-0 top-16 h-[calc(100vh-4rem)] p-6 border-r border-border hidden lg:block z-[var(--z-sidebar)]">
       {menuItems.map((section) => (
         <div key={section.title} className="mb-8">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">

@@ -56,24 +56,24 @@ export default function PortfolioPage() {
     return (
       <main className="min-h-screen bg-background">
         <Header />
-        <div className="flex">
+        <div className="flex overflow-x-hidden">
           <Sidebar />
-          <div className="flex-1 lg:pl-64">
+          <div className="flex-1 lg:pl-64 min-w-0">
             <div className="pt-16">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
-                  <div className="bg-amber-500/10 p-6 rounded-full">
-                    <Lock className="h-12 w-12 text-amber-500" />
+              <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
+                <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] text-center space-y-4 sm:space-y-6 w-full">
+                  <div className="bg-amber-500/10 p-4 sm:p-6 rounded-full">
+                    <Lock className="h-8 w-8 sm:h-12 sm:w-12 text-amber-500" />
                   </div>
-                  <div className="space-y-2">
-                    <h1 className="text-3xl font-bold text-amber-400">Portfolio Access Required</h1>
-                    <p className="text-lg text-muted-foreground max-w-md">
+                  <div className="space-y-2 px-4 w-full max-w-md">
+                    <h1 className="text-xl sm:text-3xl font-bold text-amber-400">Portfolio Access Required</h1>
+                    <p className="text-sm sm:text-lg text-muted-foreground">
                       Please sign in to view your portfolio and track your collectible investments.
                     </p>
                   </div>
                   <Button
                     onClick={() => setShowLoginDialog(true)}
-                    className="bg-amber-600 hover:bg-amber-500 text-black font-semibold px-8 py-3"
+                    className="bg-amber-600 hover:bg-amber-500 text-black font-semibold px-6 sm:px-8 py-2 sm:py-3"
                   >
                     Sign In to View Portfolio
                   </Button>
@@ -87,77 +87,66 @@ export default function PortfolioPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background overflow-x-hidden">
       <Header />
       <div className="flex">
         <Sidebar />
-        <div className="flex-1 lg:pl-64">
+        <div className="flex-1 lg:pl-64 min-w-0">
           <div className="pt-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-tutorial-id="portfolio-main-content-area">
-              <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold text-amber-400" data-tutorial-id="portfolio-page-main-title">Portfolio</h1>
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden" data-tutorial-id="portfolio-main-content-area">
+              <div className="flex justify-between items-center mb-6 sm:mb-8">
+                <h1 className="text-xl sm:text-4xl font-bold text-amber-400" data-tutorial-id="portfolio-page-main-title">Portfolio</h1>
               </div>
 
-              <div className="space-y-8" data-tutorial-id="portfolio-overview-section">
-                {/* Portfolio Summary */}
-                <div className="grid gap-4 md:grid-cols-3" data-tutorial-id="portfolio-stats-summary">
-                  <Card data-tutorial-id="portfolio-value-stat">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Portfolio Value
-                      </CardTitle>
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{formatCurrency(portfolioValue)}</div>
-                      <p className="text-xs text-muted-foreground">
-                        Total value of your holdings
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card data-tutorial-id="portfolio-performance-stat">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Unrealized P/L
-                      </CardTitle>
+              <div className="space-y-6 sm:space-y-8" data-tutorial-id="portfolio-overview-section">
+                {/* Portfolio Summary - Ultra Compact Stats */}
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-4 w-full" data-tutorial-id="portfolio-stats-summary">
+                  <div className="bg-zinc-900/50 rounded-lg p-2 sm:p-4 border border-amber-600/30 min-w-0" data-tutorial-id="portfolio-value-stat">
+                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                      <div className="text-xs text-muted-foreground truncate">Portfolio</div>
+                      <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-amber-400 flex-shrink-0" />
+                    </div>
+                    <div className="text-xs sm:text-lg font-bold text-amber-400 leading-tight truncate">{formatCurrency(portfolioValue)}</div>
+                    <div className="text-xs text-muted-foreground hidden sm:block">Total value</div>
+                  </div>
+                  
+                  <div className="bg-zinc-900/50 rounded-lg p-2 sm:p-4 border border-amber-600/30 min-w-0" data-tutorial-id="portfolio-performance-stat">
+                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                      <div className="text-xs text-muted-foreground truncate">P/L</div>
                       {unrealizedPL >= 0 ? (
-                        <ArrowUpRight className="h-4 w-4 text-green-500" />
+                        <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
                       ) : (
-                        <ArrowDownRight className="h-4 w-4 text-red-500" />
+                        <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
                       )}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{formatCurrency(unrealizedPL)}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {percentageReturn.toFixed(1)}% return
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card data-tutorial-id="portfolio-holdings-count-stat">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Number of Holdings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{holdings.length}</div>
-                      <p className="text-xs text-muted-foreground">
-                        Unique coins owned
-                      </p>
-                    </CardContent>
-                  </Card>
+                    </div>
+                    <div className={`text-xs sm:text-lg font-bold leading-tight truncate ${unrealizedPL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {formatCurrency(unrealizedPL)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{percentageReturn.toFixed(1)}%</div>
+                  </div>
+                  
+                  <div className="bg-zinc-900/50 rounded-lg p-2 sm:p-4 border border-amber-600/30 min-w-0" data-tutorial-id="portfolio-holdings-count-stat">
+                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                      <div className="text-xs text-muted-foreground truncate">Holdings</div>
+                      <div className="bg-amber-600/20 p-0.5 sm:p-1 rounded-full flex-shrink-0">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-400 rounded-full"></div>
+                      </div>
+                    </div>
+                    <div className="text-xs sm:text-lg font-bold text-amber-400 leading-tight">{holdings.length}</div>
+                    <div className="text-xs text-muted-foreground hidden sm:block">Coins owned</div>
+                  </div>
                 </div>
 
                 {/* Holdings List */}
-                <Card className="mt-8" data-tutorial-id="portfolio-coin-list-section">
-                  <CardHeader>
-                    <CardTitle>Your Holdings</CardTitle>
-                    <CardDescription>
+                <Card className="mt-6 sm:mt-8 w-full min-w-0" data-tutorial-id="portfolio-coin-list-section">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg sm:text-xl">Your Holdings</CardTitle>
+                    <CardDescription className="text-sm">
                       A detailed breakdown of your coin shares
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
+                  <CardContent className="overflow-x-hidden">
+                    <div className="space-y-3 sm:space-y-4 w-full">
                       {holdings.map((holding: ShareHolding) => {
                         const coin = coins.find(c => c.id === holding.coinId)!;
                         const currentValue = coin.market.currentMarketPrice * holding.shares;
@@ -169,28 +158,28 @@ export default function PortfolioPage() {
                           <Button
                             key={holding.coinId}
                             variant="ghost"
-                            className="w-full p-0 h-auto hover:bg-accent"
+                            className="w-full p-0 h-auto hover:bg-accent min-w-0"
                             onClick={() => router.push(`/coin/${holding.coinId}`)}
                           >
-                            <div className="flex items-center space-x-4 w-full rounded-lg border p-4">
-                              <Avatar className="h-16 w-24 rounded-lg">
+                            <div className="flex items-center space-x-3 sm:space-x-4 w-full rounded-lg border p-3 sm:p-4 min-w-0 overflow-hidden">
+                              <Avatar className="h-12 w-16 sm:h-16 sm:w-24 rounded-lg">
                                 <AvatarImage src={coin.image} alt={coin.name} className="object-cover" />
-                                <AvatarFallback className="rounded-lg">{coin.name[0]}</AvatarFallback>
+                                <AvatarFallback className="rounded-lg text-xs sm:text-sm">{coin.name[0]}</AvatarFallback>
                               </Avatar>
-                              <div className="flex-1 space-y-1 text-left">
-                                <p className="font-medium leading-none">{coin.name}</p>
-                                <p className="text-sm text-muted-foreground">
+                              <div className="flex-1 space-y-1 text-left min-w-0">
+                                <p className="font-medium leading-none text-sm sm:text-base truncate">{coin.name}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">
                                   {holding.shares} shares @ {formatCurrency(holding.purchasePrice)}/share
                                 </p>
                                 {holding.desiredSellPrice && (
-                                  <p className="text-sm text-amber-400">
+                                  <p className="text-xs sm:text-sm text-amber-400">
                                     Sell target: {formatCurrency(holding.desiredSellPrice)}/share
                                   </p>
                                 )}
                               </div>
                               <div className="text-right">
-                                <p className="font-medium">{formatCurrency(currentValue)}</p>
-                                <p className={`text-sm ${pl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                <p className="font-medium text-sm sm:text-base">{formatCurrency(currentValue)}</p>
+                                <p className={`text-xs sm:text-sm ${pl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                   {pl >= 0 ? '+' : ''}{formatCurrency(pl)} ({plPercentage.toFixed(1)}%)
                                 </p>
                               </div>
