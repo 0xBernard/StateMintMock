@@ -1,55 +1,44 @@
 #!/bin/bash
 
-# StateMint Next.js Deployment Script
-echo "🚀 Starting StateMint deployment..."
+# StateMint PM2 Deployment Script
+echo "🚀 Deploying StateMint with PM2..."
 
 # Update system
-echo "📦 Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+echo "📦 Updating system..."
+apt update && apt upgrade -y
 
-# Install Node.js (if not already installed)
+# Install Node.js 18 (if not installed)
 echo "📦 Installing Node.js..."
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt-get install -y nodejs
 
-# Install Nginx (if not already installed)
-echo "📦 Installing Nginx..."
-sudo apt install nginx -y
+# Install PM2 for process management
+echo "📦 Installing PM2..."
+npm install -g pm2
 
-# Install dependencies and build the app
-echo "🔨 Installing dependencies and building app..."
+# Install dependencies and build
+echo "🔨 Building application..."
 npm ci
 npm run build
 
-# Copy Nginx configuration
-echo "⚙️  Setting up Nginx configuration..."
-sudo cp nginx.conf /etc/nginx/sites-available/statemint
-sudo ln -sf /etc/nginx/sites-available/statemint /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+# Stop any existing PM2 processes
+echo "🔄 Stopping existing processes..."
+pm2 stop all || true
+pm2 delete all || true
 
-# Test Nginx configuration
-echo "🧪 Testing Nginx configuration..."
-sudo nginx -t
+# Start the application with PM2
+echo "🚀 Starting application..."
+pm2 start ecosystem.config.js
 
-# Copy systemd service file
-echo "⚙️  Setting up systemd service..."
-sudo cp statemint-app.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable statemint-app
-
-# Start services
-echo "🚀 Starting services..."
-sudo systemctl start statemint-app
-sudo systemctl reload nginx
-
-# Show status
-echo "📊 Service Status:"
-sudo systemctl status statemint-app --no-pager
-sudo systemctl status nginx --no-pager
+# Save PM2 configuration and setup startup
+echo "⚙️  Setting up auto-start..."
+pm2 save
+pm2 startup
 
 echo "✅ Deployment complete!"
-echo "🌐 Your app should now be available on port 80"
-echo "📝 Don't forget to:"
-echo "   1. Update the domain in nginx.conf"
-echo "   2. Update the WorkingDirectory in statemint-app.service"
-echo "   3. Configure SSL certificate for HTTPS" 
+echo "🌐 Your app is now running on port 3000"
+echo "📊 Use these commands to manage your app:"
+echo "   pm2 status          - Check app status"
+echo "   pm2 logs            - View logs"
+echo "   pm2 restart all     - Restart app"
+echo "   pm2 stop all        - Stop app" 
