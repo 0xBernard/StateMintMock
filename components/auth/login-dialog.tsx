@@ -56,7 +56,7 @@ export function LoginDialog() {
       <div className="absolute inset-0 bg-black/50" />
       
       {/* Dialog content - using same positioning as Radix UI */}
-      <div className="fixed top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 bg-zinc-900 border border-amber-600/30 rounded-lg p-6 w-full max-w-md mx-4">
+      <div className="fixed top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 bg-zinc-900 border border-amber-600/30 rounded-lg p-6 w-[90vw] max-w-md">
         <h2 className="text-lg font-semibold text-amber-400 mb-4">Welcome to StateMint</h2>
         <div className="flex flex-col items-center justify-center space-y-4">
           <p className="text-sm text-muted-foreground text-center">

@@ -25,6 +25,12 @@ export interface TutorialStep {
   overlayType?: 'dark' | 'transparent' | 'spotlight';
   spotlightPadding?: number;
   
+  // Mobile-specific overrides
+  mobilePromptPlacement?: 'top' | 'bottom' | 'left' | 'right' | 'center' | 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end' | 'left-start' | 'left-end' | 'right-start' | 'right-end';
+  mobileContent?: string | ReactNode;
+  mobileSpotlightPadding?: number;
+  mobileTargetSelector?: string;
+  
   // Z-index management
   zIndexOverrides?: ZIndexOverride[];
   

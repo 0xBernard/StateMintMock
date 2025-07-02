@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/shared/layout/header';
 import { Sidebar } from '@/components/shared/layout/sidebar';
 import { CoinCard } from '@/components/shared/marketplace/coin-card';
@@ -27,6 +28,7 @@ function calculatePercentageChange(current: number, original: number) {
 }
 
 export default function MarketplacePage() {
+  const router = useRouter();
   const { state, dispatch, currentStep } = useTutorial();
   const { isAuthenticated, user, setShowLoginDialog } = useAuth();
   const { getPortfolioValue, getUnrealizedPL } = usePortfolio();
@@ -61,7 +63,19 @@ export default function MarketplacePage() {
               {/* Portfolio Section for Mobile */}
               <div className="lg:hidden mb-4 sm:mb-6">
                 {isAuthenticated && user ? (
-                  <div className="bg-zinc-900/50 rounded-lg p-4 border border-amber-600/30">
+                  <div 
+                    className="bg-zinc-900/50 rounded-lg p-4 border border-amber-600/30 cursor-pointer hover:bg-zinc-900/70 transition-colors relative"
+                    data-tutorial-id="mobile-portfolio-widget"
+                    onClick={() => {
+                      console.log('Mobile portfolio widget clicked, navigating to portfolio');
+                      router.push('/portfolio');
+                    }}
+                    style={{ 
+                      // Ensure proper positioning for tutorial highlighting
+                      position: 'relative',
+                      zIndex: 1 
+                    }}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="bg-amber-600/20 p-2 rounded-full">
@@ -144,9 +158,9 @@ export default function MarketplacePage() {
 
               <div className="flex justify-center">
                 <div data-tutorial-id="marketplace-coin-list-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 max-w-sm sm:max-w-none">
-                  {coins.map((coin) => (
-                    <CoinCard key={coin.id} {...coin} />
-                  ))}
+                {coins.map((coin) => (
+                  <CoinCard key={coin.id} {...coin} />
+                ))}
                 </div>
               </div>
             </div>

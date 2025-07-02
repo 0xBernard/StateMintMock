@@ -171,6 +171,19 @@
   overflow: hidden;
 }
 
+/* Mobile tutorial specific enhancements */
+@media (max-width: 1023px) {
+  .tutorial-highlight {
+    border-width: 3px !important; /* Slightly thicker border on mobile */
+  }
+  
+  /* Ensure mobile portfolio widget is properly highlighted */
+  [data-tutorial-id="mobile-portfolio-widget"].tutorial-target {
+    transform: none !important; /* Prevent any transform interference */
+    position: relative !important;
+  }
+}
+
 /* Tutorial Backdrop - blocks all interactions except tutorial elements */
 .tutorial-backdrop {
   position: fixed !important;
@@ -338,11 +351,28 @@
   /* Ensure mobile menu sheet has proper z-index */
   [data-slot="sheet-content"] {
     z-index: var(--z-mobile-menu) !important;
+    overflow: hidden !important;
   }
   
   /* Ensure mobile menu overlay has proper z-index */
   [data-slot="sheet-overlay"] {
     z-index: calc(var(--z-mobile-menu) - 1) !important;
+  }
+  
+  /* Fix portfolio balance section positioning */
+  .portfolio-balance-section {
+    position: relative !important;
+    z-index: 1 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+  }
+  
+  /* Ensure mobile sheet content is properly isolated */
+  [data-slot="sheet-content"] > div {
+    position: relative !important;
+    z-index: 1 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
   }
   
   /* Improve touch targets on mobile */
@@ -376,5 +406,18 @@
   /* Portfolio mobile constraints */
   [data-tutorial-id="portfolio-stats-summary"] {
     overflow-x: hidden !important;
+  }
+  
+  /* Mobile portfolio widget glow enhancement */
+  [data-tutorial-id="mobile-portfolio-widget"] {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Ensure login dialog is properly centered on mobile */
+  [data-tutorial-id="login-dialog"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }

@@ -24,9 +24,11 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "Click the 'Login' button in the header to open the login dialog.",
     targetElementSelector: '[data-tutorial-id="header-login-button"]',
     promptPlacement: 'bottom-end',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     spotlightPadding: 12,
+    mobileSpotlightPadding: 16,
     showNextButton: false,
     showPreviousButton: false,
     waitForElement: true,
@@ -97,10 +99,14 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     title: "Visit Your Portfolio",
     content: "Perfect! You're now logged in. Let's check out your portfolio. Click on 'My Portfolio' in the sidebar.",
     targetElementSelector: '[data-tutorial-id="portfolio-link"]',
+    mobileTargetSelector: '[data-tutorial-id="mobile-portfolio-widget"]',
+    mobileContent: "Perfect! You're now logged in. Let's check out your portfolio. Tap on your portfolio card below to view your investments.",
     promptPlacement: 'right',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     spotlightPadding: 8,
+    mobileSpotlightPadding: 16,
     showNextButton: false,
     showPreviousButton: false,
     waitForElement: true,
@@ -109,11 +115,15 @@ export const enhancedTutorialSteps: TutorialStep[] = [
         selector: '[data-tutorial-id="portfolio-link"]',
         zIndex: 10000,
         createStackingContext: true
+      },
+      {
+        selector: '[data-tutorial-id="mobile-portfolio-widget"]',
+        zIndex: 10000,
+        createStackingContext: true
       }
     ],
     action: {
       type: 'navigation',
-      selector: '[data-tutorial-id="portfolio-link"]',
       navigationPath: '/portfolio',
       autoAdvance: true,
     },
@@ -123,11 +133,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       return new Promise<void>(resolve => {
         const checkElement = () => {
           const portfolioLink = document.querySelector('[data-tutorial-id="portfolio-link"]');
-          if (portfolioLink) {
-            console.log('Portfolio link found, proceeding with tutorial');
+          const mobilePortfolioWidget = document.querySelector('[data-tutorial-id="mobile-portfolio-widget"]');
+          
+          if (portfolioLink || mobilePortfolioWidget) {
+            console.log('Portfolio element found (desktop or mobile), proceeding with tutorial');
             resolve();
           } else {
-            console.log('Portfolio link not found, waiting...');
+            console.log('Portfolio element not found, waiting...');
             setTimeout(checkElement, 300);
           }
         };
@@ -143,18 +155,21 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     id: 'portfolio-overview',
     title: "Your Portfolio",
     content: "This is your portfolio. Here you can see the assets you own and manage your funds. We've started you out with a few coins for this tutorial.",
+    mobileContent: "Your portfolio shows your coin investments. Click Next to continue.",
     targetElementSelector: '[data-tutorial-id="portfolio-coin-list-section"]',
     promptPlacement: 'left',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: true,
     showPreviousButton: false,
-    spotlightPadding: 20,
+    spotlightPadding: 12,
+    mobileSpotlightPadding: 8,
     waitForElement: true,
     zIndexOverrides: [
       {
         selector: '[data-tutorial-id="portfolio-coin-list-section"]',
-        zIndex: 10000,
+        zIndex: 9994,
         createStackingContext: true
       }
     ],
@@ -173,11 +188,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "At the top of the page, you can see your total portfolio value, unrealized profit/loss, and the number of unique coins you hold.",
     targetElementSelector: '[data-tutorial-id="portfolio-stats-summary"]',
     promptPlacement: 'left',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: true,
     showPreviousButton: false,
     spotlightPadding: 10,
+    mobileSpotlightPadding: 14,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -199,17 +216,26 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     id: 'add-funds-button',
     title: "Adding Funds",
     content: "Click the 'Add Funds' button below to open the funding dialog.",
-    targetElementSelector: '[data-tutorial-id="add-funds-button"]', 
+    mobileContent: "Tap the 'Add Funds' button in the top right to add money to your portfolio.",
+    targetElementSelector: '[data-tutorial-id="add-funds-button"]',
+    mobileTargetSelector: '[data-tutorial-id="mobile-add-funds-button"]',
     promptPlacement: 'right',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
     showPreviousButton: false,
     spotlightPadding: 8,
+    mobileSpotlightPadding: 12,
     waitForElement: true,
     zIndexOverrides: [
       {
         selector: '[data-tutorial-id="add-funds-button"]',
+        zIndex: 10000,
+        createStackingContext: true
+      },
+      {
+        selector: '[data-tutorial-id="mobile-add-funds-button"]',
         zIndex: 10000,
         createStackingContext: true
       }
@@ -224,13 +250,16 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     id: 'select-payment-method',
     title: "Choose Payment Method",
     content: "Great! Now select a payment method from the options above. Credit card is fastest for this tutorial.",
+    mobileContent: "Great! Select a payment method below. Credit card is fastest for this tutorial.",
     targetElementSelector: '[data-tutorial-id="add-funds-dialog"]',
     promptPlacement: 'left',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
     showPreviousButton: false,
     spotlightPadding: 12,
+    mobileSpotlightPadding: 16,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -247,14 +276,17 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'add-funds-dialog-opened',
     title: "Enter Amount & Deposit",
-    content: "Perfect! Now enter your deposit amount (try $1000 or use a quick amount button) and click the 'Deposit' button to continue.", 
+    content: "Perfect! Now enter your deposit amount (try $1000 or use a quick amount button) and click the 'Deposit' button to continue.",
+    mobileContent: "Perfect! Enter your deposit amount (try $1000 or tap a quick amount) and tap 'Deposit' to continue.",
     targetElementSelector: '[data-tutorial-id="add-funds-dialog"]',
     promptPlacement: 'left',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
     showPreviousButton: false,
     spotlightPadding: 12,
+    mobileSpotlightPadding: 16,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -321,11 +353,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "Great! Now you're back at the marketplace. Click on any coin card to view its details and make an investment.",
     targetElementSelector: '[data-tutorial-id="marketplace-coin-list-container"]',
     promptPlacement: 'top',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
     showPreviousButton: false,
     spotlightPadding: 20,
+    mobileSpotlightPadding: 24,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -355,11 +389,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "Perfect! This is the coin detail page. Here you can analyze the investment opportunity. Let's start by examining the Order Book.",
     targetElementSelector: '[data-tutorial-id="order-book-content-area"]',
     promptPlacement: 'right',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: true,
     showPreviousButton: false,
     spotlightPadding: 12,
+    mobileSpotlightPadding: 16,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -384,11 +420,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "Here you can see the coin's previous sales history, which helps you understand its price trends and market performance.",
     targetElementSelector: '[data-tutorial-id="history-content-area"]',
     promptPlacement: 'right',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: true,
     showPreviousButton: false,
     spotlightPadding: 12,
+    mobileSpotlightPadding: 16,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -413,11 +451,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "This section shows detailed information about the coin including its grade, rarity, and historical performance metrics.",
     targetElementSelector: '[data-tutorial-id="details-content-area"]',
     promptPlacement: 'right',
+    mobilePromptPlacement: 'bottom',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: true,
     showPreviousButton: false,
     spotlightPadding: 12,
+    mobileSpotlightPadding: 16,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -442,11 +482,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "Now let's make your first investment! Use this trading widget to buy some shares. Enter the number of shares you want (try 10) and optionally set a future sell price, then click the buy button.",
     targetElementSelector: '[data-tutorial-id="buy-widget-container"]',
     promptPlacement: 'left',
+    mobilePromptPlacement: 'top',
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
     showPreviousButton: false,
     spotlightPadding: 12,
+    mobileSpotlightPadding: 16,
     waitForElement: true,
     zIndexOverrides: [
       {

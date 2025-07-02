@@ -218,17 +218,39 @@ const TutorialHighlight: React.FC<{
     }
   }
 
-  if (!actualBounds) return null;
+  // Hide highlight completely if target is off-screen
+  if (!isVisible || !actualBounds) return null;
+
+  // Mobile-only clamp (<= 640px) so highlight never starts off-screen
+  const isNarrowMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const gutter = 8;
+  let left = actualBounds.x - padding;
+  let top = actualBounds.y - padding;
+  let width = actualBounds.width + padding * 2;
+  let height = actualBounds.height + padding * 2;
+
+  if (isNarrowMobile) {
+    // Ensure a small left gutter
+    if (left < gutter) {
+      width -= gutter - left;
+      left = gutter;
+    }
+    // Prevent overflow on right side
+    if (left + width > window.innerWidth - gutter) {
+      width = window.innerWidth - gutter - left;
+    }
+    // Similar protection on top / bottom is rarely needed; add if desired
+  }
 
   return (
     <div
       className="tutorial-highlight-border"
       style={{
         position: 'fixed',
-        top: actualBounds.y - padding,
-        left: actualBounds.x - padding,
-        width: actualBounds.width + padding * 2,
-        height: actualBounds.height + padding * 2,
+        top,
+        left,
+        width,
+        height,
         border: '3px solid #f2b418',
         borderRadius: '8px',
         boxShadow: '0 0 20px rgba(242, 180, 24, 0.5), inset 0 0 20px rgba(242, 180, 24, 0.1)',
@@ -272,17 +294,20 @@ const TutorialPrompt: React.FC<{
     }
 
     // Position relative to target element
-    const placement = step.promptPlacement || 'bottom';
+    const isNarrowMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const placement = isNarrowMobile
+      ? step.mobilePromptPlacement || step.promptPlacement || 'bottom'
+      : step.promptPlacement || 'bottom';
     const padding = 16;
-    const promptWidth = 384; // max-w-md is roughly 384px
-    const promptHeight = 200; // estimated prompt height
+    const viewportWidth = window.innerWidth;
+    const promptWidth = Math.min(384, viewportWidth - padding * 2);
+    const promptHeight = 260; // better estimate to avoid clipping on mobile
     
     let top = 0;
     let left = 0;
     let transform = '';
 
     // Get viewport dimensions
-    const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
     switch (placement) {

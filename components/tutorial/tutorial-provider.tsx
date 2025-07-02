@@ -7,10 +7,13 @@ import { tutorialSteps } from '@/lib/tutorial/config';
 import { TutorialActionHandler } from './tutorial-action-handler';
 import { TutorialOverlay } from './tutorial-overlay';
 import { useTutorialStore } from '@/lib/tutorial/store';
+import { useMobileDetection, getMobileAdaptedStep } from '@/lib/tutorial/mobile-utils';
 
 interface TutorialContextProps {
   isActive: boolean;
   currentStepId: string;
+  isMobile: boolean;
+  currentStep: TutorialStep | null;
   startTutorial: (stepId?: string) => void;
   stopTutorial: () => void;
   nextStep: () => void;
@@ -21,6 +24,8 @@ interface TutorialContextProps {
 const TutorialContext = createContext<TutorialContextProps>({
   isActive: false,
   currentStepId: '',
+  isMobile: false,
+  currentStep: null,
   startTutorial: () => {},
   stopTutorial: () => {},
   nextStep: () => {},
@@ -43,19 +48,23 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
+  const isMobile = useMobileDetection();
 
-  // Get current step info
+  // Get current step info with mobile adaptation
   const currentStepId = isTutorialActive ? (activeStepConfig?.id || '') : '';
+  const currentStep = activeStepConfig ? getMobileAdaptedStep(activeStepConfig) : null;
   
   // Debug log
   useEffect(() => {
     if (isTutorialActive) {
       console.log("Tutorial active:", { 
         currentStepId,
-        pathname
+        pathname,
+        isMobile,
+        mobileAdapted: currentStep !== activeStepConfig
       });
     }
-  }, [isTutorialActive, currentStepId, pathname]);
+  }, [isTutorialActive, currentStepId, pathname, isMobile, currentStep, activeStepConfig]);
 
   // Set isClient to true after mounting
   useEffect(() => {
@@ -83,8 +92,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const contextValue: TutorialContextProps = {
     isActive: isTutorialActive,
     currentStepId,
+    isMobile,
+    currentStep,
     startTutorial: (stepId?: string) => {
-      console.log("Starting tutorial via context", { stepId });
+      console.log("Starting tutorial via context", { stepId, isMobile });
       if (stepId) {
         const stepIndex = tutorialSteps.findIndex(step => step.id === stepId);
         if (stepIndex !== -1) {

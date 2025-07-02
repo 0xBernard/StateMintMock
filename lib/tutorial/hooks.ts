@@ -121,11 +121,20 @@ export const useElementTracking = (selector: string, options: {
     
     resizeObserver.observe(element)
     
+    // Scroll listener: when the element is visible, update bounds on scroll for accurate highlight positioning
+    const handleScroll = () => {
+      if (!state.isVisible) return;
+      updateBounds();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
     return () => {
       observer.disconnect()
       resizeObserver.disconnect()
       if (frameId !== undefined) cancelAnimationFrame(frameId)
       clearTimeout(resizeTimeout)
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [selector, options.rootMargin, options.threshold, options.debounceMs])
   

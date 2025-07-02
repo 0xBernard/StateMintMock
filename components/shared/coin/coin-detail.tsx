@@ -502,7 +502,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
             <div className="bg-zinc-900/50 rounded-lg p-3 border border-amber-600/30">
               <div className="text-xs sm:text-sm text-muted-foreground mb-1">Share Price</div>
               <div className="text-sm sm:text-lg font-bold text-amber-400">{formattedMarketPrice}</div>
-            </div>
+          </div>
             <div className="bg-zinc-900/50 rounded-lg p-3 border border-amber-600/30">
               <div className="text-xs sm:text-sm text-muted-foreground mb-1">Total Shares</div>
               <div className="text-sm sm:text-lg font-bold text-amber-400">{coin.totalShares.toLocaleString()}</div>

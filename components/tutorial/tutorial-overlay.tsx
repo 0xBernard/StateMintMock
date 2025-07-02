@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTutorialStore } from '@/lib/tutorial/store';
+import { useTutorial } from './tutorial-provider';
 import { Button } from '@/components/ui/button';
 
 interface PromptPosition {
@@ -19,11 +20,11 @@ interface InteractiveElement {
 
 export function TutorialOverlay(): React.JSX.Element | null {
   const { 
-    isTutorialActive, 
-    activeStepConfig,
     nextStep,
     stopTutorial 
   } = useTutorialStore();
+  
+  const { isActive: isTutorialActive, currentStep: activeStepConfig, isMobile } = useTutorial();
 
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -50,6 +51,56 @@ export function TutorialOverlay(): React.JSX.Element | null {
     };
   }, [isTutorialActive]);
 
+  // Add scroll event listener to update positioning
+  useEffect(() => {
+    if (!isTutorialActive || !activeStepConfig) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      // Debounce scroll updates for performance
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        // Update target rect when scrolling
+        if (targetElement) {
+          const newRect = targetElement.getBoundingClientRect();
+          setTargetRect(newRect);
+        }
+        
+        // Update interactive element rects
+        const updatedInteractives = interactiveElements.map(item => ({
+          ...item,
+          rect: item.element.getBoundingClientRect()
+        }));
+        setInteractiveElements(updatedInteractives);
+      }, 16); // ~60fps update rate
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [isTutorialActive, activeStepConfig, targetElement, interactiveElements]);
+
+  // Recalculate positions on window resize
+  useEffect(() => {
+    if (!isTutorialActive) return;
+
+    const handleResize = () => {
+      if (targetElement) {
+        setTargetRect(targetElement.getBoundingClientRect());
+      }
+      // Update interactive elements rects
+      setInteractiveElements(prev => prev.map(item => ({
+        ...item,
+        rect: item.element.getBoundingClientRect()
+      })));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isTutorialActive, targetElement]);
+
   // Find target element and interactive elements
   useEffect(() => {
     if (!isTutorialActive || !activeStepConfig) {
@@ -60,8 +111,8 @@ export function TutorialOverlay(): React.JSX.Element | null {
     }
 
     // Add body data attribute for CSS targeting
-    if (activeStepConfig.id === 'add-funds-dialog-opened') {
-      document.body.setAttribute('data-tutorial-step', 'add-funds-dialog-opened');
+    if (activeStepConfig.id) {
+      document.body.setAttribute('data-tutorial-step', activeStepConfig.id);
     } else {
       document.body.removeAttribute('data-tutorial-step');
     }
@@ -72,15 +123,24 @@ export function TutorialOverlay(): React.JSX.Element | null {
       let targetR: DOMRect | null = null;
 
       if (activeStepConfig.targetElementSelector !== 'body') {
-        const element = document.querySelector(activeStepConfig.targetElementSelector) as HTMLElement;
-      if (element) {
+        // First try mobile selector if on mobile
+        let selector = activeStepConfig.targetElementSelector;
+        if (isMobile && activeStepConfig.mobileTargetSelector) {
+          selector = activeStepConfig.mobileTargetSelector;
+          console.log(`[Tutorial Debug] Using mobile selector for step ${activeStepConfig.id}: ${selector}`);
+        }
+        
+        const element = document.querySelector(selector) as HTMLElement;
+        if (element) {
           targetEl = element;
           targetR = element.getBoundingClientRect();
           element.classList.add('tutorial-target');
           
           // Debug logging
           console.log(`[Tutorial Debug] Found target element for step ${activeStepConfig.id}:`, {
-            selector: activeStepConfig.targetElementSelector,
+            selector: selector,
+            isMobile: isMobile,
+            mobileSelector: activeStepConfig.mobileTargetSelector,
             element: element,
             rect: targetR,
             elementOffset: {
@@ -95,7 +155,7 @@ export function TutorialOverlay(): React.JSX.Element | null {
             }
           });
         } else {
-          console.warn(`[Tutorial Debug] Could not find target element for selector: ${activeStepConfig.targetElementSelector}`);
+          console.warn(`[Tutorial Debug] Could not find target element for selector: ${selector} (mobile: ${isMobile})`);
         }
       }
 
@@ -168,64 +228,125 @@ export function TutorialOverlay(): React.JSX.Element | null {
         el.classList.remove('tutorial-interactive');
       });
     };
-  }, [isTutorialActive, activeStepConfig?.id]);
+  }, [isTutorialActive, activeStepConfig?.id, isMobile]);
 
-  // Calculate prompt position
+  // Calculate prompt position with scroll compensation
   useEffect(() => {
     if (!activeStepConfig) {
       setPromptPosition(null);
       return;
     }
 
-    const placement = activeStepConfig.promptPlacement || 'bottom';
-    const padding = activeStepConfig.highlightPadding || 10;
-    const promptWidth = 400;
+    const placement = (isMobile && activeStepConfig.mobilePromptPlacement) 
+      ? activeStepConfig.mobilePromptPlacement 
+      : activeStepConfig.promptPlacement || 'bottom';
+    const padding = (isMobile && activeStepConfig.mobileSpotlightPadding)
+      ? activeStepConfig.mobileSpotlightPadding
+      : activeStepConfig.spotlightPadding || activeStepConfig.highlightPadding || 10;
+    
+    // Responsive prompt sizing - more conservative on mobile
+    const promptWidth = (isMobile && window.innerWidth < 1024) ? Math.min(340, window.innerWidth - 40) : 400;
     const promptHeight = 200;
+    
+    // No scroll compensation needed for fixed-position elements – they are already
+    // relative to the viewport. Capture scroll positions only for debug logging.
+    const scrollX = 0;
+    const scrollY = 0;
+    
+    const isNarrowMobile = isMobile && window.innerWidth < 640;
+
+    console.log('[Tutorial Debug] Positioning calculation started:', {
+      isMobile,
+      isNarrowMobile,
+      windowWidth: window.innerWidth,
+      promptWidth,
+      promptHeight,
+      stepId: activeStepConfig.id,
+      scroll: { x: scrollX, y: scrollY },
+      targetRect: targetRect
+    });
 
     let top = 0;
     let left = 0;
 
     // Use target element for positioning if available, otherwise center
     if (targetRect) {
+      // Use viewport coordinates directly (position: fixed is viewport-relative)
+      const documentTop = targetRect.top;
+      const documentLeft = targetRect.left;
+      const documentRight = targetRect.right;
+      const documentBottom = targetRect.bottom;
+      
       switch (placement) {
         case 'top':
-          top = targetRect.top - promptHeight - padding;
-          left = targetRect.left + (targetRect.width / 2) - (promptWidth / 2);
+          top = documentTop - promptHeight - padding;
+          if (isMobile) {
+            left = (window.innerWidth - promptWidth) / 2;
+          } else {
+            left = documentLeft + (targetRect.width / 2) - (promptWidth / 2);
+          }
           break;
         case 'bottom':
-          top = targetRect.bottom + padding;
-          left = targetRect.left + (targetRect.width / 2) - (promptWidth / 2);
+          top = documentBottom + padding;
+          if (isMobile) {
+            left = (window.innerWidth - promptWidth) / 2;
+          } else {
+            left = documentLeft + (targetRect.width / 2) - (promptWidth / 2);
+          }
           break;
         case 'left':
-          top = targetRect.top + (targetRect.height / 2) - (promptHeight / 2);
-          left = targetRect.left - promptWidth - padding;
+          top = documentTop + (targetRect.height / 2) - (promptHeight / 2);
+          left = documentLeft - promptWidth - padding;
           break;
         case 'right':
-          top = targetRect.top + (targetRect.height / 2) - (promptHeight / 2);
-          left = targetRect.right + padding;
+          top = documentTop + (targetRect.height / 2) - (promptHeight / 2);
+          left = documentRight + padding;
           break;
         case 'bottom-end':
-          top = targetRect.bottom + padding;
-          left = targetRect.right - promptWidth;
+          top = documentBottom + padding;
+          left = documentRight - promptWidth;
           break;
         case 'center':
         default:
-          top = window.innerHeight / 2 - promptHeight / 2;
-          left = window.innerWidth / 2 - promptWidth / 2;
+          // Center in current viewport (no scroll compensation needed for center)
+          top = Math.max(20, (window.innerHeight / 2) - (promptHeight / 2));
+          left = Math.max(20, (window.innerWidth / 2) - (promptWidth / 2));
           break;
       }
+      
+      // Apply viewport bounds relative to current scroll position
+      if (placement !== 'center' && !(isMobile && (placement === 'top' || placement === 'bottom'))) {
+        const margin = isMobile && window.innerWidth < 640 ? 8 : 20;
+        const minLeft = margin;
+        const maxLeft = window.innerWidth - promptWidth - margin;
+        const minTop = margin;
+        const maxTop = window.innerHeight - promptHeight - margin;
+        
+        left = Math.max(minLeft, Math.min(left, maxLeft));
+        top = Math.max(minTop, Math.min(top, maxTop));
+      }
     } else {
-      // Center when no target
-      top = window.innerHeight / 2 - promptHeight / 2;
-      left = window.innerWidth / 2 - promptWidth / 2;
+      // Center when no target - position in current viewport
+      top = Math.max(20, (window.innerHeight / 2) - (promptHeight / 2));
+      left = Math.max(20, (window.innerWidth / 2) - (promptWidth / 2));
     }
 
-    // Keep within viewport
-    top = Math.max(20, Math.min(top, window.innerHeight - promptHeight - 20));
-    left = Math.max(20, Math.min(left, window.innerWidth - promptWidth - 20));
+    console.log(`[Tutorial Debug] Final prompt positioning for step ${activeStepConfig.id}:`, {
+      placement,
+      scroll: { x: scrollX, y: scrollY },
+      finalPosition: { top, left },
+      promptDimensions: { width: promptWidth, height: promptHeight },
+      targetRect: targetRect,
+      documentCoords: targetRect ? {
+        top: targetRect.top,
+        left: targetRect.left,
+        bottom: targetRect.bottom,
+        right: targetRect.right
+      } : null
+    });
 
     setPromptPosition({ top, left, placement });
-  }, [targetRect, activeStepConfig?.promptPlacement, activeStepConfig?.highlightPadding]);
+  }, [targetRect, activeStepConfig?.promptPlacement, activeStepConfig?.highlightPadding, activeStepConfig?.id]);
 
   if (!isTutorialActive || !activeStepConfig || !portalContainer) {
     return null;
@@ -248,67 +369,121 @@ export function TutorialOverlay(): React.JSX.Element | null {
       {/* Backdrop with holes */}
       {showBackdrop && <BackdropWithHoles interactiveElements={interactiveElements} targetRect={targetRect} activeStepConfig={activeStepConfig} />}
 
-      {/* Target Highlight */}
+      {/* Target Highlight with scroll compensation */}
       {targetRect && !isModalStyle && activeStepConfig.id !== 'login-completion' && (
         <div
           className="tutorial-highlight"
           style={{
-            top: targetRect.top - (activeStepConfig.highlightPadding || 10),
-            left: targetRect.left - (activeStepConfig.highlightPadding || 10),
-            width: targetRect.width + (activeStepConfig.highlightPadding || 10) * 2,
-            height: targetRect.height + (activeStepConfig.highlightPadding || 10) * 2,
+            position: 'fixed',
+            top: (() => {
+              const padding = (isMobile && activeStepConfig.mobileSpotlightPadding) ? activeStepConfig.mobileSpotlightPadding : activeStepConfig.spotlightPadding || activeStepConfig.highlightPadding || 10;
+              return Math.max(0, targetRect.top - padding);
+            })(),
+            left: (() => {
+              const padding = (isMobile && activeStepConfig.mobileSpotlightPadding) ? activeStepConfig.mobileSpotlightPadding : activeStepConfig.spotlightPadding || activeStepConfig.highlightPadding || 10;
+              const calculatedLeft = targetRect.left - padding;
+              const isNarrowMobile = isMobile && window.innerWidth < 640;
+              if (!isNarrowMobile) return Math.max(0, calculatedLeft);
+
+              // For very narrow screens ensure some left gutter & keep highlight centred around target
+              const minGutter = 8;
+              if (calculatedLeft >= minGutter) return calculatedLeft;
+
+              // Reduce left-padding so highlight fits
+              const availableLeft = Math.max(minGutter, targetRect.left);
+              return availableLeft - Math.min(availableLeft - minGutter, padding);
+            })(),
+            width: (() => {
+              const padding = (isMobile && activeStepConfig.mobileSpotlightPadding) ? activeStepConfig.mobileSpotlightPadding : activeStepConfig.spotlightPadding || activeStepConfig.highlightPadding || 10;
+              const rawLeft = targetRect.left - padding;
+              let effectiveLeft = rawLeft;
+              if (isMobile && rawLeft < 8) {
+                effectiveLeft = 8;
+              } else if (rawLeft < 0) {
+                effectiveLeft = 0;
+              }
+              return Math.min(targetRect.width + padding * 2, window.innerWidth - effectiveLeft);
+            })(),
+            height: targetRect.height + ((isMobile && activeStepConfig.mobileSpotlightPadding) ? activeStepConfig.mobileSpotlightPadding : activeStepConfig.spotlightPadding || activeStepConfig.highlightPadding || 10) * 2,
           }}
           ref={(el) => {
             if (el) {
+              const padding = (isMobile && activeStepConfig.mobileSpotlightPadding) ? activeStepConfig.mobileSpotlightPadding : activeStepConfig.spotlightPadding || activeStepConfig.highlightPadding || 10;
+              const calculatedLeft = targetRect.left - padding;
+              const boundedLeft = Math.max(0, calculatedLeft);
+              
               console.log(`[Tutorial Debug] Highlight positioning for step ${activeStepConfig.id}:`, {
                 targetRect: targetRect,
-                padding: activeStepConfig.highlightPadding || 10,
-                calculatedStyle: {
-                  top: targetRect.top - (activeStepConfig.highlightPadding || 10),
-                  left: targetRect.left - (activeStepConfig.highlightPadding || 10),
-                  width: targetRect.width + (activeStepConfig.highlightPadding || 10) * 2,
-                  height: targetRect.height + (activeStepConfig.highlightPadding || 10) * 2,
+                scroll: { x: window.scrollX || window.pageXOffset || 0, y: window.scrollY || window.pageYOffset || 0 },
+                padding: padding,
+                positioning: {
+                  calculatedLeft: calculatedLeft,
+                  boundedLeft: boundedLeft,
+                  documentTop: targetRect.top - padding,
+                  documentLeft: boundedLeft
                 },
-                actualStyle: el.style
+                finalStyle: {
+                  top: targetRect.top - padding,
+                  left: boundedLeft,
+                  width: targetRect.width + padding * 2,
+                  height: targetRect.height + padding * 2,
+                }
               });
             }
           }}
         />
       )}
 
-      {/* Interactive Element Highlights */}
-      {!activeStepConfig.useTransparentOverlay && activeStepConfig.id !== 'login-completion' && interactiveElements.map((item, index) => (
-        <div
-          key={`${item.id}-${index}`}
-          className="tutorial-highlight tutorial-interactive-highlight"
-          style={{
-            top: item.rect.top - 6,
-            left: item.rect.left - 6,
-            width: item.rect.width + 12,
-            height: item.rect.height + 12,
-            animationDelay: `${index * 0.1}s`,
-          }}
-        />
-      ))}
+      {/* Interactive Element Highlights with scroll compensation */}
+      {!activeStepConfig.useTransparentOverlay && activeStepConfig.id !== 'login-completion' && interactiveElements.map((item, index) => {
+        return (
+          <div
+            key={`${item.id}-${index}`}
+            className="tutorial-highlight tutorial-interactive-highlight"
+            style={{
+              position: 'fixed',
+              top: (() => {
+                if (!isMobile) return Math.max(0, item.rect.top - 6);
+                return Math.max(0, item.rect.top - 6);
+              })(),
+              left: (() => {
+                if (!isMobile) return Math.max(0, item.rect.left - 6);
+                return Math.max(8, item.rect.left - 6);
+              })(),
+              width: item.rect.width + 12,
+              height: item.rect.height + 12,
+              animationDelay: `${index * 0.1}s`,
+            }}
+          />
+        );
+      })}
 
       {/* Tutorial Prompt */}
       {promptPosition && (
         <div
           className="tutorial-prompt-container"
           style={{
+            position: 'fixed',
             top: promptPosition.top,
             left: promptPosition.left,
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
+            zIndex: 'var(--tutorial-prompt-z)'
           }}
         >
-          <div className="tutorial-prompt">
+          <div
+            className="tutorial-prompt"
+            style={{ 
+              width: isMobile ? 'min(340px, calc(100vw - 40px))' : 400,
+              minWidth: isMobile ? '280px' : '400px'
+            }}
+          >
             {activeStepConfig.title && (
               <h3 className="text-lg font-semibold mb-3 text-foreground">
                 {activeStepConfig.title}
               </h3>
             )}
             <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-              {activeStepConfig.content}
+              {isMobile && activeStepConfig.mobileContent ? activeStepConfig.mobileContent : activeStepConfig.content}
             </p>
             <div className="flex justify-end gap-2">
               {activeStepConfig.showNextButton !== false && (
@@ -352,9 +527,20 @@ function BackdropWithHoles({
   if (shouldCreateFullOverlay) {
     // Full dark overlay with no holes for add-funds-dialog-opened step
     console.log('[Tutorial Debug] Creating full overlay for add-funds-dialog-opened');
-  return (
+    const scrollX = 0;
+    const scrollY = 0;
+    return (
       <div 
-        className="tutorial-add-funds-full-overlay"
+        className="tutorial-backdrop tutorial-add-funds-full-overlay"
+        style={{
+          position: 'fixed',
+          top: scrollY,
+          left: scrollX,
+          width: window.innerWidth,
+          height: window.innerHeight,
+          backgroundColor: 'var(--tutorial-backdrop-color)',
+          zIndex: 'calc(var(--tutorial-overlay-z) - 1)'
+        }}
         onClick={() => console.log('[Tutorial Debug] Backdrop clicked')}
       />
     );
@@ -377,12 +563,14 @@ function BackdropWithHoles({
           <div 
             key={index}
             className="tutorial-backdrop"
-        style={{
+            style={{
               position: 'fixed',
               top: panel.top,
               left: panel.left,
               width: panel.width,
               height: panel.height,
+              background: 'var(--tutorial-backdrop-color)',
+              zIndex: 'calc(var(--tutorial-overlay-z) - 1)'
             }}
           />
         ))
@@ -412,7 +600,7 @@ function BackdropWithHoles({
   );
 }
 
-// Create overlay panels that avoid holes
+// Create overlay panels that avoid holes with scroll compensation
 function createOverlayPanels(holes: DOMRect[]) {
   const panels = [];
   const viewportWidth = window.innerWidth;
@@ -422,8 +610,18 @@ function createOverlayPanels(holes: DOMRect[]) {
     return [{ top: 0, left: 0, width: viewportWidth, height: viewportHeight }];
   }
 
+  // Convert holes to document coordinates
+  const documentHoles = holes.map(hole => ({
+    top: hole.top,
+    left: hole.left,
+    right: hole.right,
+    bottom: hole.bottom,
+    width: hole.width,
+    height: hole.height
+  }));
+
   // Sort holes by position to create efficient panels
-  const sortedHoles = [...holes].sort((a, b) => a.top - b.top || a.left - b.left);
+  const sortedHoles = [...documentHoles].sort((a, b) => a.top - b.top || a.left - b.left);
   
   // Create panels around holes
   // Top panel (above all holes)

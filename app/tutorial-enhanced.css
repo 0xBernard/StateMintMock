@@ -27,6 +27,40 @@
   transition: all 0.3s ease-in-out;
 }
 
+/* Tutorial prompt container positioning */
+.tutorial-prompt-container {
+  position: fixed !important;
+  z-index: var(--tutorial-prompt-z) !important;
+  pointer-events: auto;
+}
+
+/* Tutorial highlight positioning */
+.tutorial-highlight {
+  position: fixed !important;
+  z-index: var(--tutorial-overlay-z) !important;
+  pointer-events: none;
+}
+
+/* Tutorial backdrop positioning */
+.tutorial-backdrop {
+  position: fixed !important;
+  background: var(--tutorial-backdrop-color);
+  z-index: calc(var(--tutorial-overlay-z) - 1) !important;
+  pointer-events: auto;
+}
+
+/* Full overlay for blocking steps */
+.tutorial-add-funds-full-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: var(--tutorial-backdrop-color) !important;
+  z-index: calc(var(--tutorial-overlay-z) - 1) !important;
+  pointer-events: auto !important;
+}
+
 /* Golden border highlight animation */
 .tutorial-highlight-border {
   pointer-events: none !important;
@@ -99,6 +133,16 @@
   }
 }
 
+/* Enhanced glow for mobile portfolio widget during tutorial */
+.tutorial-active [data-tutorial-id="mobile-portfolio-widget"].tutorial-target {
+  box-shadow: 
+    0 0 0 3px rgba(242, 180, 24, 0.6),
+    0 0 20px rgba(242, 180, 24, 0.4),
+    0 0 40px rgba(242, 180, 24, 0.2) !important;
+  border-color: rgba(242, 180, 24, 0.8) !important;
+  animation: tutorialPulse 2s infinite;
+}
+
 /* Smooth transitions between tutorial steps */
 .tutorial-layer {
   transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
@@ -117,6 +161,7 @@
 [data-tutorial-id="header-login-button"],
 [data-tutorial-id="portfolio-link"],
 [data-tutorial-id="marketplace-link"],
+[data-tutorial-id="mobile-portfolio-widget"],
 [data-tutorial-id="add-funds-button"],
 [data-tutorial-id="confirm-deposit"],
 [data-tutorial-id="prompt-next-button"],
@@ -136,10 +181,31 @@ button[aria-label="Continue with Google"],
 }
 
 /* Responsive tutorial prompts */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .tutorial-prompt {
-    max-width: 90vw;
-    margin: 0 1rem;
+    max-width: 85vw;
+    margin: 0 auto;
+    min-width: 320px;
+  }
+  
+  /* Compact prompt for portfolio steps */
+  .tutorial-active[data-tutorial-step="portfolio-overview"] .tutorial-prompt,
+  .tutorial-active[data-tutorial-step="portfolio-stats-summary-highlight"] .tutorial-prompt {
+    padding: 1rem;
+    max-width: 80vw;
+    min-height: auto;
+  }
+  
+  .tutorial-active[data-tutorial-step="portfolio-overview"] .tutorial-prompt h3,
+  .tutorial-active[data-tutorial-step="portfolio-stats-summary-highlight"] .tutorial-prompt h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .tutorial-active[data-tutorial-step="portfolio-overview"] .tutorial-prompt p,
+  .tutorial-active[data-tutorial-step="portfolio-stats-summary-highlight"] .tutorial-prompt p {
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
   }
 }
 

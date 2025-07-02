@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useEf
 import { createPortal } from 'react-dom';
 import { TutorialState, TutorialAction, TutorialContextValue, TutorialStep, TutorialProviderProps } from './types';
 import { generateSessionId } from './hooks';
+import { useMobileDetection, getMobileAdaptedStep } from './mobile-utils';
 
 // Create the tutorial context
 const TutorialContext = createContext<TutorialContextValue | null>(null);
@@ -60,6 +61,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
   const [isClient, setIsClient] = useState(false);
   const [TutorialLayer, setTutorialLayer] = useState<React.ComponentType<any> | null>(null);
   const isProcessingRef = useRef(false);
+  const isMobile = useMobileDetection();
   
   // Initialize state with a stable server-side value
   const [state, setState] = useState<TutorialState>(() => ({
@@ -192,13 +194,24 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
     return state.steps[state.currentStepIndex]?.id === stepId;
   }, [state.isActive, state.currentStepIndex, state.steps]);
 
-  // Get current step
+  // Get current step with mobile adaptation
   const currentStep = useMemo(() => {
     if (!state.isActive || state.currentStepIndex >= state.steps.length) {
       return null;
     }
-    return state.steps[state.currentStepIndex];
-  }, [state.isActive, state.currentStepIndex, state.steps]);
+    const rawStep = state.steps[state.currentStepIndex];
+    const adaptedStep = getMobileAdaptedStep(rawStep);
+    
+    console.log('[Tutorial Provider] Step adaptation:', {
+      stepId: rawStep.id,
+      isMobile,
+      originalPlacement: rawStep.promptPlacement,
+      adaptedPlacement: adaptedStep.promptPlacement,
+      changed: rawStep.promptPlacement !== adaptedStep.promptPlacement
+    });
+    
+    return adaptedStep;
+  }, [state.isActive, state.currentStepIndex, state.steps, isMobile]);
 
   const contextValue: TutorialContextValue = useMemo(() => ({
     state,
