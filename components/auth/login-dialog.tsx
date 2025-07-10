@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from "@/lib/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import Image from "next/image"
 import { useTutorial } from '@/lib/tutorial/ephemeral-provider'
+import React from 'react'
 
 export function LoginDialog() {
   const { showLoginDialog, setShowLoginDialog, login } = useAuth()
@@ -19,6 +20,19 @@ export function LoginDialog() {
     activeStepId: state.steps[state.currentStepIndex]?.id 
   })
 
+  // Handle tutorial advancement when dialog opens
+  useEffect(() => {
+    if (showLoginDialog && state.isActive) {
+      const currentStep = state.steps[state.currentStepIndex];
+      if (currentStep?.id === 'login-prompt') {
+        console.log('Login dialog opened during login-prompt step - advancing to google-login-button step');
+        setTimeout(() => {
+          dispatch({ type: 'NEXT_STEP' });
+        }, 200); // Reduced delay to better sync with dialog appearance
+      }
+    }
+  }, [showLoginDialog, state.isActive, state.currentStepIndex, state.steps, dispatch]);
+
   const handleGoogleLogin = () => {
     setIsLoading(true)
     // Simulate OAuth flow delay
@@ -27,13 +41,18 @@ export function LoginDialog() {
       setIsLoading(false)
       setShowLoginDialog(false)
       
-      // If tutorial is active and on login-prompt step, advance immediately
+      // If tutorial is active, advance step based on current step
       const currentStep = state.steps[state.currentStepIndex];
-      if (state.isActive && currentStep?.id === 'login-prompt') {
-        console.log('Login completed, advancing tutorial step immediately')
-        dispatch({ type: 'NEXT_STEP' });
-      } else {
-        console.log('Login completed, tutorial should auto-detect and advance')
+      if (state.isActive) {
+        if (currentStep?.id === 'google-login-button') {
+          console.log('Google login button clicked during tutorial - advancing from google-login-button step')
+          dispatch({ type: 'NEXT_STEP' });
+        } else if (currentStep?.id === 'login-prompt') {
+          console.log('Login completed during login-prompt step - advancing to login-completion')
+          dispatch({ type: 'NEXT_STEP' });
+        } else {
+          console.log('Login completed during tutorial, auto-detect should handle advancement')
+        }
       }
     }, 1500)
   }
@@ -48,23 +67,28 @@ export function LoginDialog() {
 
   return (
     <div 
-      className="fixed inset-0 z-[2005]"
+      className="fixed inset-0 z-[2000]"
       onClick={handleBackdropClick}
-      data-tutorial-id="login-dialog"
     >
       {/* Custom backdrop */}
       <div className="absolute inset-0 bg-black/50" />
       
       {/* Dialog content - using same positioning as Radix UI */}
-      <div className="fixed top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 bg-zinc-900 border border-amber-600/30 rounded-lg p-6 w-[90vw] max-w-md">
-        <h2 className="text-lg font-semibold text-amber-400 mb-4">Welcome to StateMint</h2>
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <p className="text-sm text-muted-foreground text-center">
-            Sign in to start trading collectible shares
-          </p>
+      <div 
+        className="fixed top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 bg-zinc-900 border border-amber-600/30 rounded-lg p-6 w-[90vw] max-w-md"
+        data-tutorial-id="login-dialog"
+      >
+        <div className="text-center space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-amber-400">Welcome to StateMint</h2>
+            <p className="text-sm text-muted-foreground">
+              Sign in to start trading collectible shares
+            </p>
+          </div>
+          
           <Button 
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center space-x-2 relative bg-white hover:bg-gray-50 text-black"
+            className="w-full flex items-center justify-center space-x-2 relative bg-white hover:bg-gray-50 text-black h-12"
             disabled={isLoading}
             data-tutorial-id="google-oauth-button"
             aria-label="Continue with Google"
@@ -80,11 +104,12 @@ export function LoginDialog() {
                   height={20}
                   className="absolute left-3"
                 />
-                <span>Continue with Google</span>
+                <span className="font-medium">Continue with Google</span>
               </>
             )}
           </Button>
-          <p className="text-xs text-muted-foreground text-center">
+          
+          <p className="text-xs text-muted-foreground">
             By continuing, you agree to StateMint&apos;s Terms of Service and Privacy Policy
           </p>
         </div>

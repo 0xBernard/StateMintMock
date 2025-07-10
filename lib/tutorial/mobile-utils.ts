@@ -64,6 +64,11 @@ export function getMobileAdaptedStep(step: import('./types').TutorialStep): impo
     content: step.mobileContent || step.content,
     spotlightPadding: step.mobileSpotlightPadding || getMobileSpotlightPadding(step.spotlightPadding),
     targetElementSelector: step.mobileTargetSelector || step.targetElementSelector,
+    // Handle mobile action selector
+    action: step.action && step.action.mobileSelector ? {
+      ...step.action,
+      selector: step.action.mobileSelector
+    } : step.action,
   };
 }
 

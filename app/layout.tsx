@@ -6,7 +6,9 @@ import "./tutorial-enhanced.css";
 import { AuthProvider } from "@/lib/context/auth-context";
 import { MarketProvider } from '@/lib/context/market-context';
 import { FinancialProvider } from '@/lib/context/financial-context';
+import { AddFundsProvider } from '@/lib/context/add-funds-context';
 import { ClientTutorialWrapper } from '@/components/tutorial/client-tutorial-wrapper';
+import { AddFundsDialogWrapper } from '@/components/shared/add-funds-dialog-wrapper';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -29,10 +31,13 @@ export default function RootLayout({
         <AuthProvider>
           <FinancialProvider>
             <MarketProvider>
-              <ClientTutorialWrapper mode={tutorialMode}>
-                {children}
-                <Toaster />
-              </ClientTutorialWrapper>
+              <AddFundsProvider>
+                <ClientTutorialWrapper mode={tutorialMode}>
+                  {children}
+                  <AddFundsDialogWrapper />
+                  <Toaster />
+                </ClientTutorialWrapper>
+              </AddFundsProvider>
             </MarketProvider>
           </FinancialProvider>
         </AuthProvider>

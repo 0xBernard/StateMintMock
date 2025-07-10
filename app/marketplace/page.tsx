@@ -41,16 +41,7 @@ export default function MarketplacePage() {
     portfolioValue - unrealizedPL
   );
 
-  // Auto-advance tutorial if we're on marketplace-navigation step and already on marketplace page
-  useEffect(() => {
-    if (state.isActive && currentStep?.id === 'marketplace-navigation') {
-      console.log('Marketplace page loaded while on marketplace-navigation step - auto-advancing');
-      // Small delay to ensure the step is fully initialized
-      setTimeout(() => {
-        dispatch({ type: 'NEXT_STEP' });
-      }, 500);
-    }
-  }, [state.isActive, currentStep?.id, dispatch]);
+
 
   return (
     <main className="min-h-screen bg-background">
@@ -116,6 +107,7 @@ export default function MarketplacePage() {
                         onClick={() => setShowLoginDialog(true)}
                         size="sm"
                         className="bg-amber-600 hover:bg-amber-500 text-black font-semibold"
+                        data-tutorial-id="marketplace-portfolio-login-button"
                       >
                         Login
                       </Button>

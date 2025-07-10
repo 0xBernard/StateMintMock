@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { TutorialStep } from './types';
 import { useElementTracking, useTutorialCleanup } from './hooks';
 import { AdvancedZIndexManager } from './z-index-manager';
@@ -21,6 +22,31 @@ const TutorialOverlay: React.FC<{
   const { bounds, isVisible } = useElementTracking(target || '', {
     debounceMs: 50
   });
+  
+  const [forcedBounds, setForcedBounds] = React.useState<DOMRect | null>(null);
+  
+  // Force bounds calculation for tab content
+  React.useEffect(() => {
+    if (!target) return;
+    
+    const checkElementBounds = () => {
+      const element = document.querySelector(target);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setForcedBounds(rect);
+          console.log('[TutorialOverlay] Forced bounds for', target, rect);
+        }
+      }
+    };
+    
+    checkElementBounds();
+    const interval = setInterval(checkElementBounds, 200); // Reduced frequency
+    return () => clearInterval(interval);
+  }, [target]);
+  
+  // Use forced bounds if available, fallback to tracked bounds
+  const actualBounds = forcedBounds || bounds;
 
   // Memoize expensive calculations
   const overlayStyle = useMemo(() => {
@@ -28,12 +54,12 @@ const TutorialOverlay: React.FC<{
       return { opacity: 0 };
     }
     
-    if (type !== 'spotlight' || !bounds) {
+    if (type !== 'spotlight' || !actualBounds) {
       return { 
         background: 'rgba(0, 0, 0, 0.7)',
         position: 'fixed' as const,
         inset: 0,
-        zIndex: 9998,
+        zIndex: 1000, // --z-tutorial-backdrop
         pointerEvents: 'auto' as const // Block interactions for non-spotlight overlays
       };
     }
@@ -41,11 +67,11 @@ const TutorialOverlay: React.FC<{
     return {
       position: 'fixed' as const,
       inset: 0,
-      zIndex: 9998,
+      zIndex: 1000, // --z-tutorial-backdrop
       background: 'transparent',
       pointerEvents: 'auto' as const // We'll handle pointer events in the SVG
     };
-  }, [type, bounds]);
+  }, [type, actualBounds]);
 
   // Create click handler to block interactions outside spotlight
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
@@ -63,16 +89,18 @@ const TutorialOverlay: React.FC<{
     }
   }, [type, target]);
 
-  if (!isVisible && target) return null;
+  if (!isVisible && target && !forcedBounds) return null;
 
   // For spotlight, use SVG mask approach with interaction blocking
-  if (type === 'spotlight' && bounds) {
+  if (type === 'spotlight' && actualBounds) {
+    console.log('[TutorialOverlay] Rendering spotlight for', target, { actualBounds, usingForcedBounds: !!forcedBounds });
+    
     return (
       <>
         {/* Visual overlay with SVG mask - no pointer events */}
         <div style={{ ...overlayStyle, pointerEvents: 'none' }}>
           <svg 
-            style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, pointerEvents: 'none' }} // --z-tutorial-backdrop
             width="100%" 
             height="100%"
           >
@@ -80,10 +108,10 @@ const TutorialOverlay: React.FC<{
               <mask id={`spotlight-mask-${target?.replace(/[^a-zA-Z0-9]/g, '')}`}>
                 <rect width="100%" height="100%" fill="white" />
                 <rect
-                  x={bounds.x - spotlightPadding}
-                  y={bounds.y - spotlightPadding}
-                  width={bounds.width + spotlightPadding * 2}
-                  height={bounds.height + spotlightPadding * 2}
+                  x={actualBounds.x - spotlightPadding}
+                  y={actualBounds.y - spotlightPadding}
+                  width={actualBounds.width + spotlightPadding * 2}
+                  height={actualBounds.height + spotlightPadding * 2}
                   rx={4}
                   fill="black"
                 />
@@ -106,8 +134,8 @@ const TutorialOverlay: React.FC<{
             top: 0,
             left: 0,
             right: 0,
-            height: bounds.y - spotlightPadding,
-            zIndex: 9998,
+            height: actualBounds.y - spotlightPadding,
+            zIndex: 1000, // --z-tutorial-backdrop
             pointerEvents: 'auto',
             background: 'transparent'
           }}
@@ -119,11 +147,11 @@ const TutorialOverlay: React.FC<{
         <div
           style={{
             position: 'fixed',
-            top: bounds.y + bounds.height + spotlightPadding,
+            top: actualBounds.y + actualBounds.height + spotlightPadding,
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 9998,
+            zIndex: 1000, // --z-tutorial-backdrop
             pointerEvents: 'auto',
             background: 'transparent'
           }}
@@ -135,11 +163,11 @@ const TutorialOverlay: React.FC<{
         <div
           style={{
             position: 'fixed',
-            top: bounds.y - spotlightPadding,
+            top: actualBounds.y - spotlightPadding,
             left: 0,
-            width: bounds.x - spotlightPadding,
-            height: bounds.height + spotlightPadding * 2,
-            zIndex: 9998,
+            width: actualBounds.x - spotlightPadding,
+            height: actualBounds.height + spotlightPadding * 2,
+            zIndex: 1000, // --z-tutorial-backdrop
             pointerEvents: 'auto',
             background: 'transparent'
           }}
@@ -151,11 +179,11 @@ const TutorialOverlay: React.FC<{
         <div
           style={{
             position: 'fixed',
-            top: bounds.y - spotlightPadding,
-            left: bounds.x + bounds.width + spotlightPadding,
+            top: actualBounds.y - spotlightPadding,
+            left: actualBounds.x + actualBounds.width + spotlightPadding,
             right: 0,
-            height: bounds.height + spotlightPadding * 2,
-            zIndex: 9998,
+            height: actualBounds.height + spotlightPadding * 2,
+            zIndex: 1000, // --z-tutorial-backdrop
             pointerEvents: 'auto',
             background: 'transparent'
           }}
@@ -191,35 +219,50 @@ const TutorialHighlight: React.FC<{
 
   // For tab content, we need to check if the element exists even if not visible
   const [elementExists, setElementExists] = React.useState(false);
+  const [forcedBounds, setForcedBounds] = React.useState<DOMRect | null>(null);
   
   React.useEffect(() => {
     const checkElement = () => {
       const element = document.querySelector(target);
-      setElementExists(!!element);
+      const exists = !!element;
+      setElementExists(exists);
+      
+      // For tab content, force bounds calculation
+      if (exists && element) {
+        const rect = element.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setForcedBounds(rect);
+          console.log('[TutorialHighlight] Forced bounds for', target, rect);
+        }
+      }
     };
     
     checkElement();
-    const interval = setInterval(checkElement, 100);
+    const interval = setInterval(checkElement, 200); // Reduced frequency
     return () => clearInterval(interval);
   }, [target]);
 
   // Don't render if element doesn't exist
-  if (!elementExists) return null;
-
-  // For tab content areas, try to get bounds even if not visible
-  const element = document.querySelector(target);
-  let actualBounds = bounds;
-  
-  if (!bounds && element) {
-    // Force visibility check for tab content
-    const rect = element.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      actualBounds = rect;
-    }
+  if (!elementExists) {
+    console.log('[TutorialHighlight] Element does not exist:', target);
+    return null;
   }
 
-  // Hide highlight completely if target is off-screen
-  if (!isVisible || !actualBounds) return null;
+  // Use forced bounds if available, fallback to tracked bounds
+  const actualBounds = forcedBounds || bounds;
+
+  // For tab content, be more aggressive about showing highlights
+  if (!actualBounds) {
+    console.log('[TutorialHighlight] No bounds available for:', target, { bounds, forcedBounds, isVisible });
+    return null;
+  }
+
+  console.log('[TutorialHighlight] Rendering highlight for:', target, { 
+    actualBounds, 
+    isVisible, 
+    elementExists,
+    usingForcedBounds: !!forcedBounds 
+  });
 
   // Mobile-only clamp (<= 640px) so highlight never starts off-screen
   const isNarrowMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -255,7 +298,7 @@ const TutorialHighlight: React.FC<{
         borderRadius: '8px',
         boxShadow: '0 0 20px rgba(242, 180, 24, 0.5), inset 0 0 20px rgba(242, 180, 24, 0.1)',
         pointerEvents: 'none',
-        zIndex: 9997,
+        zIndex: 3001, // --z-tutorial-prompts + 1 for highlights
         animation: 'tutorial-highlight-pulse 2s ease-in-out infinite',
         transition: 'all 0.3s ease-in-out'
       }}
@@ -277,21 +320,56 @@ const TutorialPrompt: React.FC<{
   onPrevious: () => void;
   onSkip: () => void;
 }> = ({ step, onNext, onPrevious, onSkip }) => {
+  const router = useRouter();
   const { bounds } = useElementTracking(step.targetElementSelector);
+  const [forcedBounds, setForcedBounds] = React.useState<DOMRect | null>(null);
+  
+  // Force bounds calculation for tab content
+  React.useEffect(() => {
+    const checkElementBounds = () => {
+      const element = document.querySelector(step.targetElementSelector);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setForcedBounds(rect);
+          console.log('[TutorialPrompt] Forced bounds for', step.targetElementSelector, rect);
+        }
+      }
+    };
+    
+    checkElementBounds();
+    const interval = setInterval(checkElementBounds, 200); // Reduced frequency
+    return () => clearInterval(interval);
+  }, [step.targetElementSelector]);
+  
+  // Use forced bounds if available, fallback to tracked bounds
+  const actualBounds = forcedBounds || bounds;
   
   // Calculate prompt position
   const promptStyle = useMemo(() => {
-    if (step.isModal || !bounds) {
+    if (step.isModal || !actualBounds) {
+      console.log('[TutorialPrompt] Using modal positioning for:', step.id, { 
+        isModal: step.isModal, 
+        hasActualBounds: !!actualBounds,
+        bounds,
+        forcedBounds 
+      });
       // Center modal
       return {
         position: 'fixed' as const,
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 9999,
+        zIndex: 3002, // --z-tutorial-prompts + 2 for prompts (highest)
         pointerEvents: 'auto' as const
       };
     }
+
+    console.log('[TutorialPrompt] Using relative positioning for:', step.id, { 
+      actualBounds, 
+      placement: step.promptPlacement,
+      usingForcedBounds: !!forcedBounds 
+    });
 
     // Position relative to target element
     const isNarrowMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -300,7 +378,8 @@ const TutorialPrompt: React.FC<{
       : step.promptPlacement || 'bottom';
     const padding = 16;
     const viewportWidth = window.innerWidth;
-    const promptWidth = Math.min(384, viewportWidth - padding * 2);
+    // Match the CSS constraint: min(28rem, calc(100vw - 2rem))
+    const promptWidth = Math.min(448, viewportWidth - 32); // 28rem = 448px, 2rem = 32px
     const promptHeight = 260; // better estimate to avoid clipping on mobile
     
     let top = 0;
@@ -312,54 +391,54 @@ const TutorialPrompt: React.FC<{
 
     switch (placement) {
       case 'top':
-        top = bounds.top - padding;
-        left = bounds.left + bounds.width / 2;
+        top = actualBounds.top - padding;
+        left = actualBounds.left + actualBounds.width / 2;
         transform = 'translate(-50%, -100%)';
         break;
       case 'bottom':
-        top = bounds.bottom + padding;
-        left = bounds.left + bounds.width / 2;
+        top = actualBounds.bottom + padding;
+        left = actualBounds.left + actualBounds.width / 2;
         transform = 'translate(-50%, 0)';
         break;
       case 'bottom-end':
-        top = bounds.bottom + padding;
-        left = bounds.right;
+        top = actualBounds.bottom + padding;
+        left = actualBounds.right;
         transform = 'translate(-100%, 0)';
         break;
       case 'bottom-start':
-        top = bounds.bottom + padding;
-        left = bounds.left;
+        top = actualBounds.bottom + padding;
+        left = actualBounds.left;
         transform = 'translate(0, 0)';
         break;
       case 'top-end':
-        top = bounds.top - padding;
-        left = bounds.right;
+        top = actualBounds.top - padding;
+        left = actualBounds.right;
         transform = 'translate(-100%, -100%)';
         break;
       case 'top-start':
-        top = bounds.top - padding;
-        left = bounds.left;
+        top = actualBounds.top - padding;
+        left = actualBounds.left;
         transform = 'translate(0, -100%)';
         break;
       case 'left':
-        top = bounds.top + bounds.height / 2;
-        left = bounds.left - padding;
+        top = actualBounds.top + actualBounds.height / 2;
+        left = actualBounds.left - padding;
         transform = 'translate(-100%, -50%)';
         break;
       case 'right':
-        top = bounds.top + bounds.height / 2;
-        left = bounds.right + padding;
+        top = actualBounds.top + actualBounds.height / 2;
+        left = actualBounds.right + padding;
         transform = 'translate(0, -50%)';
         break;
       case 'center':
       default:
-        top = bounds.top + bounds.height / 2;
-        left = bounds.left + bounds.width / 2;
+        top = actualBounds.top + actualBounds.height / 2;
+        left = actualBounds.left + actualBounds.width / 2;
         transform = 'translate(-50%, -50%)';
         break;
     }
 
-    // Viewport boundary checks to prevent offscreen positioning
+    // Simple viewport boundary checks to prevent offscreen positioning
     const minPadding = 16;
     
     // Check horizontal bounds
@@ -385,10 +464,10 @@ const TutorialPrompt: React.FC<{
       top,
       left,
       transform,
-      zIndex: 9999,
+      zIndex: 3002, // --z-tutorial-prompts + 2 for prompts (highest)
       pointerEvents: 'auto' as const
     };
-  }, [bounds, step.isModal, step.promptPlacement]);
+  }, [actualBounds, step.isModal, step.promptPlacement, step.mobilePromptPlacement, bounds, forcedBounds]);
 
   return (
     <div 
@@ -424,7 +503,21 @@ const TutorialPrompt: React.FC<{
         )}
         {step.showNextButton !== false && (
           <button
-            onClick={onNext}
+            onClick={() => {
+              // Special handling for marketplace-navigation step
+              if (step.id === 'marketplace-navigation') {
+                console.log('[Tutorial Layer] Marketplace navigation - navigating to /marketplace and advancing tutorial');
+                // Use Next.js router for client-side navigation to maintain state
+                router.push('/marketplace');
+                // Advance tutorial after navigation
+                setTimeout(() => {
+                  onNext();
+                }, 100);
+              } else {
+                // Regular next behavior
+                onNext();
+              }
+            }}
             data-tutorial-id="prompt-next-button"
             className="px-4 py-2 bg-[#f2b418] hover:bg-[#d99f15] text-black rounded transition-colors font-medium"
           >

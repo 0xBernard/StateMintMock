@@ -20,14 +20,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Menu, User, Wallet, Home, ShoppingBag, Folder, Plus, CreditCard, Building2, QrCode, Copy, ExternalLink, Loader2 } from 'lucide-react';
+import { LogOut, Menu, User, Wallet, Home, ShoppingBag, Folder, Plus } from 'lucide-react';
 import { LoginDialog } from '@/components/auth/login-dialog';
 import { useFinancial } from '@/lib/context/financial-context';
 import { usePortfolio } from '@/lib/context/portfolio-context';
+import { useAddFunds } from '@/lib/context/add-funds-context';
 
 const navigation = [
   { name: 'Marketplace', href: '/marketplace', enabled: true, icon: ShoppingBag },
@@ -48,17 +46,11 @@ function formatCurrency(amount: number) {
 
 export function Header() {
   const { isAuthenticated, user, logout, setShowLoginDialog } = useAuth();
-  const { availableBalance, deposit } = useFinancial();
+  const { availableBalance } = useFinancial();
   const { getPortfolioValue } = usePortfolio();
+  const { openAddFundsDialog } = useAddFunds();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  
-  // Add Funds dialog state
-  const [showFundsDialog, setShowFundsDialog] = React.useState(false);
-  const [isDepositing, setIsDepositing] = React.useState(false);
-  const [depositAmount, setDepositAmount] = React.useState('');
-  const [selectedMethod, setSelectedMethod] = React.useState<'card' | 'bank' | 'usdc' | null>(null);
-  const mockUSDCAddress = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e';
 
   const portfolioValue = getPortfolioValue();
 
@@ -78,36 +70,11 @@ export function Header() {
     setIsMobileMenuOpen(false);
   };
 
-  // Add Funds handlers
-  const handleDeposit = async () => {
-    const amount = parseFloat(depositAmount);
-    if (isNaN(amount) || amount <= 0 || !selectedMethod) return;
-    
-    setIsDepositing(true);
-    // Simulate deposit processing
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    deposit(amount);
-    setIsDepositing(false);
-
-    setShowFundsDialog(false);
-    setDepositAmount('');
-    setSelectedMethod(null);
-    setIsMobileMenuOpen(false); // Close mobile menu after deposit
+  const handleAddFundsClick = () => {
+    console.log('[Header] Add Funds button clicked');
+    openAddFundsDialog();
+    setIsMobileMenuOpen(false); // Close mobile menu when opening Add Funds dialog
   };
-
-  const handleDialogChange = (open: boolean) => {
-    setShowFundsDialog(open);
-  };
-
-  const handlePaymentMethodSelect = (method: 'card' | 'bank' | 'usdc' | null) => {
-    setSelectedMethod(method);
-  };
-
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(mockUSDCAddress);
-  };
-
-  const quickAmounts = [100, 500, 1000, 5000];
 
   return (
     <>
@@ -122,6 +89,7 @@ export function Header() {
                     variant="ghost"
                     className="lg:hidden mr-2 h-10 w-10 p-0"
                     aria-label="Open menu"
+                    data-tutorial-id="mobile-menu-button"
                   >
                     <Menu className="h-6 w-6 text-amber-400" />
                   </Button>
@@ -197,6 +165,7 @@ export function Header() {
                                   ? 'text-muted-foreground hover:text-amber-400 hover:bg-amber-950/20'
                                   : 'text-muted-foreground/50 cursor-not-allowed'
                               }`}
+                              data-tutorial-id={item.name === 'Marketplace' ? 'mobile-marketplace-link' : item.name === 'Portfolio' ? 'mobile-portfolio-link' : undefined}
                             >
                               {Icon && <Icon className="h-5 w-5" />}
                               <span>{item.name}</span>
@@ -216,9 +185,9 @@ export function Header() {
                       {isAuthenticated ? (
                         <>
                           <Button
-                            onClick={() => {
-                              setShowFundsDialog(true);
-                              // Don't close mobile menu yet - let dialog handle it
+                            onClick={(e) => {
+                              console.log('[Header] Mobile menu Add Funds button clicked', e);
+                              handleAddFundsClick();
                             }}
                             className="w-full bg-amber-600 hover:bg-amber-500 text-black font-semibold"
                             data-tutorial-id="mobile-menu-add-funds-button"
@@ -278,6 +247,7 @@ export function Header() {
                         ? 'text-amber-400 border-b-2 border-amber-400'
                         : 'text-muted-foreground hover:text-amber-400'
                     } ${!item.enabled && 'cursor-default opacity-50'}`}
+                    data-tutorial-id={item.name === 'Marketplace' ? 'marketplace-link' : item.name === 'Portfolio' ? 'portfolio-link' : undefined}
                   >
                     {item.name}
                   </Link>
@@ -341,7 +311,7 @@ export function Header() {
 
               {/* Mobile User Action - show wallet icon or user icon */}
               <div className="lg:hidden">
-                {isAuthenticated ? (
+                {isAuthenticated && (
                   <div className="flex items-center space-x-2">
                     <span className="text-xs text-amber-400 font-medium">
                       {formatCurrency(availableBalance)}
@@ -353,14 +323,6 @@ export function Header() {
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                ) : (
-                  <Button
-                    onClick={() => setShowLoginDialog(true)}
-                    size="sm"
-                    className="bg-amber-600 hover:bg-amber-500 text-black font-semibold"
-                  >
-                    Login
-                  </Button>
                 )}
               </div>
             </div>
@@ -369,155 +331,7 @@ export function Header() {
       </header>
       <LoginDialog />
       
-      {/* Mobile Add Funds Dialog */}
-      <Dialog open={showFundsDialog} onOpenChange={handleDialogChange}>
-        <DialogContent className="sm:max-w-[425px] max-w-[95vw] mx-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-amber-400">Add Funds</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 py-4">
-            {/* Payment Methods */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Choose payment method</Label>
-              <div className="grid gap-3">
-                <Button
-                  variant={selectedMethod === 'card' ? 'default' : 'outline'}
-                  className={`justify-start p-4 h-auto ${selectedMethod === 'card' ? 'bg-amber-600/20 border-amber-600 text-amber-400' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('card')}
-                >
-                  <CreditCard className="h-5 w-5 mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium">Credit/Debit Card</div>
-                    <div className="text-sm text-muted-foreground">Instant transfer</div>
-                  </div>
-                </Button>
-                
-                <Button
-                  variant={selectedMethod === 'bank' ? 'default' : 'outline'}
-                  className={`justify-start p-4 h-auto ${selectedMethod === 'bank' ? 'bg-amber-600/20 border-amber-600 text-amber-400' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('bank')}
-                >
-                  <Building2 className="h-5 w-5 mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium">Bank Transfer</div>
-                    <div className="text-sm text-muted-foreground">1-3 business days</div>
-                  </div>
-                </Button>
-                
-                <Button
-                  variant={selectedMethod === 'usdc' ? 'default' : 'outline'}
-                  className={`justify-start p-4 h-auto ${selectedMethod === 'usdc' ? 'bg-amber-600/20 border-amber-600 text-amber-400' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('usdc')}
-                >
-                  <QrCode className="h-5 w-5 mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium">USDC Deposit</div>
-                    <div className="text-sm text-muted-foreground">Crypto wallet transfer</div>
-                  </div>
-                </Button>
-              </div>
-            </div>
 
-            {/* Amount Input for Card/Bank */}
-            {(selectedMethod === 'card' || selectedMethod === 'bank') && (
-              <div className="space-y-3">
-                <Label htmlFor="amount" className="text-sm font-medium">Amount (USD)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="Enter amount"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  className="text-lg"
-                />
-                <div className="grid grid-cols-4 gap-2">
-                  {quickAmounts.map((amount) => (
-                    <Button
-                      key={amount}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDepositAmount(amount.toString())}
-                      className="text-xs"
-                    >
-                      ${amount}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* USDC Instructions */}
-            {selectedMethod === 'usdc' && (
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">USDC Deposit Address</Label>
-                <div className="bg-zinc-900/50 p-3 rounded-lg border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">Ethereum Network</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopyAddress}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <Copy className="h-3 w-3 mr-1" />
-                      Copy
-                    </Button>
-                  </div>
-                  <div className="text-sm font-mono bg-black/50 p-2 rounded text-center break-all">
-                    {mockUSDCAddress}
-                  </div>
-                </div>
-                <div className="text-xs text-amber-400 bg-amber-500/10 p-3 rounded-lg">
-                  ⚠️ Only send USDC on Ethereum network to this address. Other tokens or networks may result in permanent loss.
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex space-x-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  handleDialogChange(false);
-                  setIsMobileMenuOpen(false); // Close mobile menu when canceling
-                }}
-                className="flex-1"
-                disabled={isDepositing}
-              >
-                Cancel
-              </Button>
-              
-              {selectedMethod === 'usdc' ? (
-                <Button
-                  onClick={() => {
-                    handleDialogChange(false);
-                    setIsMobileMenuOpen(false); // Close mobile menu
-                  }}
-                  className="flex-1 bg-amber-600 hover:bg-amber-500 text-black"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Continue in Wallet
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleDeposit}
-                  disabled={!selectedMethod || !depositAmount || parseFloat(depositAmount) <= 0 || isDepositing}
-                  className="flex-1 bg-amber-600 hover:bg-amber-500 text-black disabled:opacity-50"
-                >
-                  {isDepositing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    `Deposit ${depositAmount ? `$${depositAmount}` : ''}`
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 } 

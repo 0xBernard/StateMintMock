@@ -1,18 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/auth-context';
 import { usePortfolio, ShareHolding } from '@/lib/context/portfolio-context';
 import { useFinancial } from '@/lib/context/financial-context';
+import { useAddFunds } from '@/lib/context/add-funds-context';
 import { useTutorial } from '@/lib/tutorial/ephemeral-provider';
 import { coins } from '@/lib/data/coins';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ArrowUpRight, ArrowDownRight, DollarSign, Lock, Plus, CreditCard, Building2, QrCode, Copy, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, DollarSign, Lock, Plus } from 'lucide-react';
 import { Header } from '@/components/shared/layout/header';
 import { Sidebar } from '@/components/shared/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -34,16 +32,10 @@ export default function PortfolioPage() {
   const { isAuthenticated, setShowLoginDialog } = useAuth();
   const router = useRouter();
   const { holdings, getPortfolioValue, getUnrealizedPL } = usePortfolio();
-  const { availableBalance, deposit } = useFinancial();
+  const { availableBalance } = useFinancial();
+  const { openAddFundsDialog } = useAddFunds();
   const { state, dispatch, currentStep } = useTutorial();
   const hasAdvancedRef = useRef(false);
-  
-  // Add Funds dialog state
-  const [showFundsDialog, setShowFundsDialog] = useState(false);
-  const [isDepositing, setIsDepositing] = useState(false);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState<'card' | 'bank' | 'usdc' | null>(null);
-  const mockUSDCAddress = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e';
 
   // Auto-advance tutorial if we're on portfolio-navigation step and already on portfolio page
   useEffect(() => {
@@ -56,95 +48,7 @@ export default function PortfolioPage() {
     }
   }, [state.isActive, currentStep?.id, dispatch]);
 
-  // Tutorial integration for Add Funds flow
-  useEffect(() => {
-    console.log('[Portfolio] Tutorial state changed:', {
-      isActive: state.isActive,
-      currentStepId: currentStep?.id,
-      showFundsDialog,
-      selectedMethod
-    });
 
-    // Auto-advance if dialog is open but tutorial is still on add-funds-button
-    if (state.isActive && currentStep?.id === 'add-funds-button' && showFundsDialog) {
-      console.log('[Portfolio] Dialog is open but tutorial stuck on add-funds-button - auto-advancing');
-      setTimeout(() => {
-        dispatch({ type: 'NEXT_STEP' });
-      }, 500);
-    }
-
-    // Auto-advance if payment method is selected but tutorial is still on select-payment-method
-    if (state.isActive && currentStep?.id === 'select-payment-method' && selectedMethod && showFundsDialog) {
-      console.log('[Portfolio] Payment method selected but tutorial stuck on select-payment-method - auto-advancing');
-      setTimeout(() => {
-        dispatch({ type: 'NEXT_STEP' });
-      }, 500);
-    }
-  }, [state.isActive, currentStep?.id, showFundsDialog, selectedMethod, dispatch]);
-
-  const handleDeposit = async () => {
-    const amount = parseFloat(depositAmount);
-    if (isNaN(amount) || amount <= 0 || !selectedMethod) return;
-    
-    setIsDepositing(true);
-    // Simulate deposit processing
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    deposit(amount);
-    setIsDepositing(false);
-
-    // Advance tutorial if we're on the add-funds-dialog-opened step
-    if (currentStep?.id === 'add-funds-dialog-opened') {
-      console.log('[Portfolio] Deposit completed during tutorial - advancing step');
-      setTimeout(() => {
-        dispatch({ type: 'NEXT_STEP' });
-      }, 500);
-    }
-
-    // Delay closing the dialog to allow tutorial to advance if needed
-    await new Promise(resolve => setTimeout(resolve, 250));
-
-    setShowFundsDialog(false);
-    setDepositAmount('');
-    setSelectedMethod(null);
-  };
-
-  const handleDialogChange = (open: boolean) => {
-    console.log('[Portfolio] handleDialogChange called. Open:', open, 'Current step:', currentStep?.id);
-
-    // For preventing dialog closure during tutorial
-    if (!open && (currentStep?.id === 'select-payment-method' || currentStep?.id === 'add-funds-dialog-opened')) {
-      console.log(`[Portfolio] Attempted to close Add Funds dialog during tutorial step ${currentStep.id}. Preventing.`);
-      return;
-    }
-    
-    setShowFundsDialog(open);
-    
-    // Advance tutorial when dialog opens if we're on the add-funds-button step
-    if (open && currentStep?.id === 'add-funds-button') {
-      console.log('[Portfolio] Dialog opened during add-funds-button step - advancing to select-payment-method');
-      setTimeout(() => {
-        dispatch({ type: 'NEXT_STEP' });
-      }, 300);
-    }
-  };
-
-  const handlePaymentMethodSelect = (method: 'card' | 'bank' | 'usdc' | null) => {
-    setSelectedMethod(method);
-    
-    // Advance tutorial if we're on the select-payment-method step and a method was selected
-    if (currentStep?.id === 'select-payment-method' && method !== null) {
-      console.log('[Portfolio] Payment method selected during tutorial - advancing to add-funds-dialog-opened');
-      setTimeout(() => {
-        dispatch({ type: 'NEXT_STEP' });
-      }, 500);
-    }
-  };
-
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(mockUSDCAddress);
-  };
-
-  const quickAmounts = [100, 500, 1000, 5000];
 
   const portfolioValue = getPortfolioValue();
   const unrealizedPL = getUnrealizedPL();
@@ -176,6 +80,7 @@ export default function PortfolioPage() {
                   <Button
                     onClick={() => setShowLoginDialog(true)}
                     className="bg-amber-600 hover:bg-amber-500 text-black font-semibold px-6 sm:px-8 py-2 sm:py-3"
+                    data-tutorial-id="portfolio-login-button"
                   >
                     Sign In to View Portfolio
                   </Button>
@@ -185,154 +90,6 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      {/* Mobile Add Funds Dialog */}
-      <Dialog open={showFundsDialog} onOpenChange={handleDialogChange}>
-        <DialogContent className="sm:max-w-[425px] max-w-[95vw] mx-auto" data-tutorial-id="add-funds-dialog">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-amber-400">Add Funds</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 py-4">
-            {/* Payment Methods */}
-            <div className="space-y-3" data-tutorial-id="payment-methods-section">
-              <Label className="text-sm font-medium">Choose payment method</Label>
-              <div className="grid gap-3">
-                <Button
-                  variant={selectedMethod === 'card' ? 'default' : 'outline'}
-                  className={`justify-start p-4 h-auto ${selectedMethod === 'card' ? 'bg-amber-600/20 border-amber-600 text-amber-400' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('card')}
-                  data-tutorial-id="payment-method-card"
-                >
-                  <CreditCard className="h-5 w-5 mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium">Credit/Debit Card</div>
-                    <div className="text-sm text-muted-foreground">Instant transfer</div>
-                  </div>
-                </Button>
-                
-                <Button
-                  variant={selectedMethod === 'bank' ? 'default' : 'outline'}
-                  className={`justify-start p-4 h-auto ${selectedMethod === 'bank' ? 'bg-amber-600/20 border-amber-600 text-amber-400' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('bank')}
-                  data-tutorial-id="payment-method-bank"
-                >
-                  <Building2 className="h-5 w-5 mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium">Bank Transfer</div>
-                    <div className="text-sm text-muted-foreground">1-3 business days</div>
-                  </div>
-                </Button>
-                
-                <Button
-                  variant={selectedMethod === 'usdc' ? 'default' : 'outline'}
-                  className={`justify-start p-4 h-auto ${selectedMethod === 'usdc' ? 'bg-amber-600/20 border-amber-600 text-amber-400' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('usdc')}
-                  data-tutorial-id="payment-method-usdc"
-                >
-                  <QrCode className="h-5 w-5 mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium">USDC Deposit</div>
-                    <div className="text-sm text-muted-foreground">Crypto wallet transfer</div>
-                  </div>
-                </Button>
-              </div>
-            </div>
-
-            {/* Amount Input for Card/Bank */}
-            {(selectedMethod === 'card' || selectedMethod === 'bank') && (
-              <div className="space-y-3" data-tutorial-id="amount-input-section">
-                <Label htmlFor="amount" className="text-sm font-medium">Amount (USD)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="Enter amount"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  className="text-lg"
-                  data-tutorial-id="amount-input-field"
-                />
-                <div className="grid grid-cols-4 gap-2" data-tutorial-id="quick-amounts">
-                  {quickAmounts.map((amount) => (
-                    <Button
-                      key={amount}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDepositAmount(amount.toString())}
-                      className="text-xs"
-                    >
-                      ${amount}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* USDC Instructions */}
-            {selectedMethod === 'usdc' && (
-              <div className="space-y-3" data-tutorial-id="usdc-instructions">
-                <Label className="text-sm font-medium">USDC Deposit Address</Label>
-                <div className="bg-zinc-900/50 p-3 rounded-lg border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">Ethereum Network</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopyAddress}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <Copy className="h-3 w-3 mr-1" />
-                      Copy
-                    </Button>
-                  </div>
-                  <div className="text-sm font-mono bg-black/50 p-2 rounded text-center break-all">
-                    {mockUSDCAddress}
-                  </div>
-                </div>
-                <div className="text-xs text-amber-400 bg-amber-500/10 p-3 rounded-lg">
-                  ⚠️ Only send USDC on Ethereum network to this address. Other tokens or networks may result in permanent loss.
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex space-x-3 pt-4" data-tutorial-id="action-buttons">
-              <Button
-                variant="outline"
-                onClick={() => handleDialogChange(false)}
-                className="flex-1"
-                disabled={isDepositing}
-              >
-                Cancel
-              </Button>
-              
-              {selectedMethod === 'usdc' ? (
-                <Button
-                  onClick={() => handleDialogChange(false)}
-                  className="flex-1 bg-amber-600 hover:bg-amber-500 text-black"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Continue in Wallet
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleDeposit}
-                  disabled={!selectedMethod || !depositAmount || parseFloat(depositAmount) <= 0 || isDepositing}
-                  className="flex-1 bg-amber-600 hover:bg-amber-500 text-black disabled:opacity-50"
-                  data-tutorial-id="deposit-button"
-                >
-                  {isDepositing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    `Deposit ${depositAmount ? `$${depositAmount}` : ''}`
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }
@@ -349,7 +106,12 @@ export default function PortfolioPage() {
                 <h1 className="text-xl sm:text-4xl font-bold text-amber-400" data-tutorial-id="portfolio-page-main-title">Portfolio</h1>
                 {/* Mobile Add Funds Button */}
                 <Button
-                  onClick={() => setShowFundsDialog(true)}
+                  onClick={() => {
+                    console.log('[Portfolio] Mobile Add Funds button clicked - tutorial active:', state.isActive, 'current step:', currentStep?.id);
+                    
+                    // Just open the dialog - let the dialog handle tutorial advancement
+                    openAddFundsDialog();
+                  }}
                   className="bg-amber-600 hover:bg-amber-500 text-black font-medium px-3 py-2 sm:px-4 sm:py-2 text-sm lg:hidden"
                   data-tutorial-id="mobile-add-funds-button"
                 >
@@ -455,6 +217,8 @@ export default function PortfolioPage() {
           </div>
         </div>
       </div>
+
+
     </main>
   );
 } 

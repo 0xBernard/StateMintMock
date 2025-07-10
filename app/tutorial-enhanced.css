@@ -3,9 +3,9 @@
   --tutorial-backdrop-color: rgba(0, 0, 0, 0.75);
   --tutorial-highlight-color: rgba(242, 180, 24, 0.3);
   --tutorial-border-color: rgb(242, 180, 24);
-  --tutorial-overlay-z: 9998;
-  --tutorial-prompt-z: 9999;
-  --tutorial-interactive-z: 10000;
+  --tutorial-overlay-z: 3001;
+  --tutorial-prompt-z: 3002;
+  --tutorial-interactive-z: 3002;
 }
 
 /* Tutorial layer animations */

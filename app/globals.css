@@ -99,12 +99,11 @@
   --z-mobile-menu: 1100;
   --z-sticky-content: 999;
   
-  /* Tutorial z-index layers - comprehensive hierarchy */
-  --z-tutorial-backdrop: 2000;
-  --z-tutorial-highlight: 2001;
-  --z-tutorial-target: 2002;
-  --z-tutorial-prompt: 1000001;
-  --z-tutorial-interactive: 2004;
+  /* Simplified Z-Index Hierarchy - 4 clear layers */
+  --z-base: 1;                    /* Base site content */
+  --z-tutorial-backdrop: 1000;    /* No-click tutorial overlay */
+  --z-dialogs: 2000;              /* All dialogs and modals */
+  --z-tutorial-prompts: 3000;     /* Tutorial prompts and highlights - highest layer */
   
   /* Tutorial colors */
   --tutorial-overlay-color: rgba(0, 0, 0, 0.75);
@@ -207,7 +206,7 @@
   border: 4px solid var(--tutorial-border-color) !important;
   border-radius: 8px !important;
   background-color: var(--tutorial-highlight-color) !important;
-  z-index: var(--z-tutorial-highlight) !important;
+  z-index: var(--z-tutorial-prompts) !important;
   pointer-events: none !important;
   animation: tutorial-pulse 2s infinite !important;
   box-shadow: 0 0 20px rgba(242, 180, 24, 0.5) !important;
@@ -224,14 +223,14 @@
 /* Tutorial Target Element - made interactive and elevated */
 .tutorial-target {
   position: relative !important;
-  z-index: var(--z-tutorial-target) !important;
+  z-index: var(--z-tutorial-prompts) !important;
   pointer-events: auto !important;
 }
 
 /* Tutorial Interactive Elements */
 .tutorial-interactive {
   position: relative !important;
-  z-index: var(--z-tutorial-interactive) !important;
+  z-index: var(--z-tutorial-prompts) !important;
   pointer-events: auto !important;
   cursor: pointer !important;
 }
@@ -239,7 +238,7 @@
 /* Tutorial Prompt Container */
 .tutorial-prompt-container {
   position: fixed !important;
-  z-index: var(--z-tutorial-prompt) !important;
+  z-index: var(--z-tutorial-prompts) !important;
   pointer-events: none !important;
 }
 
@@ -253,7 +252,7 @@
   max-width: 400px !important;
   width: auto !important;
   pointer-events: auto !important;
-  z-index: var(--z-tutorial-prompt) !important;
+  z-index: var(--z-tutorial-prompts) !important;
 }
 
 /* Tutorial Portal Containers */
@@ -261,7 +260,7 @@
   position: fixed !important;
   inset: 0 !important;
   pointer-events: none !important;
-  z-index: var(--z-tutorial-backdrop) !important;
+  z-index: var(--z-tutorial-prompts) !important;
 }
 
 /* Portfolio blocking overlay for add-funds step */
@@ -274,7 +273,7 @@
   width: 100vw !important;
   height: 100vh !important;
   background-color: rgba(0, 0, 0, 0.8) !important;
-  z-index: 99999 !important;
+  z-index: 1000 !important; /* --z-tutorial-backdrop */
   pointer-events: auto !important;
 }
 
@@ -288,13 +287,67 @@
   width: 100vw !important;
   height: 100vh !important;
   background-color: rgba(0, 0, 0, 0.75) !important;
-  z-index: 999999 !important;
+  z-index: 1000 !important; /* --z-tutorial-backdrop */
   pointer-events: auto !important;
 }
 
 /* Hide Radix dialog overlay during tutorial */
 [data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] {
   display: none !important;
+}
+
+/* Force dialog close button to correct position - highest priority */
+[data-slot="dialog-content"] [data-slot="dialog-close"],
+[role="dialog"] [data-radix-dismiss],
+.dialog-close,
+.radix-dialog-close {
+  position: absolute !important;
+  top: 1rem !important;
+  right: 1rem !important;
+  z-index: 3001 !important; /* --z-tutorial-prompts + 1 */
+  pointer-events: auto !important;
+  opacity: 0.7 !important;
+  transition: opacity 200ms !important;
+}
+
+[data-slot="dialog-content"] [data-slot="dialog-close"]:hover,
+[role="dialog"] [data-radix-dismiss]:hover,
+.dialog-close:hover,
+.radix-dialog-close:hover {
+  opacity: 1 !important;
+}
+
+/* Login prompt step - scroll blocking only */
+[data-tutorial-step="login-prompt"] body {
+  overflow: hidden !important;
+}
+
+/* Login prompt step - header positioning (below tutorial glow) */
+[data-tutorial-step="login-prompt"] header {
+  z-index: var(--z-header) !important; /* Keep header below tutorial prompts (3000) */
+}
+
+/* Login prompt step - comprehensive click blocking */
+[data-tutorial-step="login-prompt"] main,
+[data-tutorial-step="login-prompt"] .marketplace-content,
+[data-tutorial-step="login-prompt"] [data-slot="sheet-content"],
+[data-tutorial-step="login-prompt"] .portfolio-content,
+[data-tutorial-step="login-prompt"] .coin-detail-content,
+[data-tutorial-step="login-prompt"] .page-content {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Login prompt step - allow header and portfolio card interactions */
+[data-tutorial-step="login-prompt"] header,
+[data-tutorial-step="login-prompt"] nav,
+[data-tutorial-step="login-prompt"] [data-tutorial-id="header-login-button"],
+[data-tutorial-step="login-prompt"] [data-tutorial-id="marketplace-portfolio-login-button"],
+[data-tutorial-step="login-prompt"] [data-tutorial-id="login-dialog"],
+[data-tutorial-step="login-prompt"] [role="dialog"],
+[data-tutorial-step="login-prompt"] [data-slot="dialog-content"] {
+  pointer-events: auto !important;
+  user-select: auto !important;
 }
 
 /* Animations */
@@ -334,6 +387,109 @@
   }
 }
 
+/* Enhanced dialog positioning fixes - let Radix handle positioning */
+[data-slot="dialog-content"] {
+  z-index: var(--z-dialogs) !important;
+}
+
+/* Special handling for Add Funds dialog only */
+[data-tutorial-id="add-funds-dialog"] {
+  z-index: 2500 !important; /* Above backdrop (1000) and dialogs (2000), below prompts (3000) */
+}
+
+[data-slot="dialog-content"][data-tutorial-id="add-funds-dialog"] {
+  z-index: 2500 !important; /* Above backdrop (1000) and dialogs (2000), below prompts (3000) */
+}
+
+/* Force Add Funds dialog overlay to be above tutorial backdrop when Add Funds dialog is open */
+body[data-tutorial-step="select-payment-method"] [data-slot="dialog-overlay"],
+body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] {
+  z-index: 2499 !important; /* Just below the dialog content */
+}
+
+/* Fix Add Funds dialog sizing on mobile */
+@media (max-width: 1023px) {
+  /* Target the specific Add Funds dialog */
+  [data-slot="dialog-content"][data-tutorial-id="add-funds-dialog"] {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Compact Add Funds dialog during tutorial steps on mobile */
+  body[data-tutorial-step="select-payment-method"] [data-slot="dialog-content"][data-tutorial-id="add-funds-dialog"],
+  body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-content"][data-tutorial-id="add-funds-dialog"] {
+    max-height: 65vh !important;
+    padding: 1rem !important;
+  }
+  
+  /* Reduce internal spacing in Add Funds dialog during tutorial */
+  body[data-tutorial-step="select-payment-method"] [data-tutorial-id="add-funds-dialog"] .space-y-4,
+  body[data-tutorial-step="add-funds-dialog-opened"] [data-tutorial-id="add-funds-dialog"] .space-y-4 {
+    gap: 0.75rem !important;
+  }
+  
+  /* Reduce payment method button padding during tutorial */
+  body[data-tutorial-step="select-payment-method"] [data-tutorial-id="add-funds-dialog"] .grid > button,
+  body[data-tutorial-step="add-funds-dialog-opened"] [data-tutorial-id="add-funds-dialog"] .grid > button {
+    padding: 0.75rem !important;
+  }
+  
+  /* Compact Add Funds dialog header during tutorial */
+  body[data-tutorial-step="select-payment-method"] [data-tutorial-id="add-funds-dialog"] .pb-2,
+  body[data-tutorial-step="add-funds-dialog-opened"] [data-tutorial-id="add-funds-dialog"] .pb-2 {
+    padding-bottom: 0.5rem !important;
+  }
+  
+  /* Reduce quick amount button sizing during tutorial */
+  body[data-tutorial-step="add-funds-dialog-opened"] [data-tutorial-id="add-funds-dialog"] .grid-cols-4 > button {
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Elevate dialogs containing tutorial interactive elements above tutorial backdrop */
+[data-slot="dialog-content"]:has(button[aria-label="Continue with Google"]),
+[data-slot="dialog-content"]:has(.google-auth-button),
+[data-slot="dialog-content"]:has([data-testid="google-auth-button"]),
+[role="dialog"]:has(button[aria-label="Continue with Google"]),
+[role="dialog"]:has(.google-auth-button),
+[role="dialog"]:has([data-testid="google-auth-button"]) {
+  z-index: var(--z-dialogs) !important;
+}
+
+/* Ensure mobile menu closes properly when dialogs open */
+[data-slot="sheet-content"] {
+  z-index: calc(var(--z-dialogs) - 100) !important;
+}
+
+/* Prevent sheet overlay conflicts with dialog overlays */
+.tutorial-active [data-slot="sheet-overlay"] {
+  z-index: calc(var(--z-dialogs) - 101) !important;
+}
+
+/* Tutorial prompt responsive constraints */
+.tutorial-prompt {
+  max-width: min(28rem, calc(100vw - 2rem)) !important; /* 28rem = max-w-md, with viewport constraint */
+}
+
+/* Tutorial prompt improvements for mobile - use 1024px to match JS breakpoint */
+@media (max-width: 1023px) {
+  .tutorial-prompt-container {
+    padding: 0 0.5rem !important; /* Global mobile compact padding */
+  }
+  
+  .tutorial-prompt {
+    max-width: calc(100vw - 2rem) !important;
+    min-width: calc(100vw - 4rem) !important;
+    margin: 0 auto !important;
+    padding: 1rem !important; /* Global mobile compact padding */
+    font-size: 0.875rem !important; /* Global mobile smaller font */
+    line-height: 1.25rem !important; /* Global mobile tighter line height */
+  }
+}
+
 /* Mobile Responsive Styles */
 @media (max-width: 1023px) {
   /* Prevent horizontal scrolling on mobile */
@@ -357,6 +513,24 @@
   /* Ensure mobile menu overlay has proper z-index */
   [data-slot="sheet-overlay"] {
     z-index: calc(var(--z-mobile-menu) - 1) !important;
+  }
+  
+  /* Special handling for tutorial highlighting within mobile sheet */
+  [data-slot="sheet-content"] [data-tutorial-id="mobile-marketplace-link"],
+  [data-slot="sheet-content"] [data-tutorial-id="mobile-portfolio-link"] {
+    position: relative !important;
+    z-index: 10001 !important;
+  }
+  
+  /* Ensure mobile sheet is accessible during tutorial */
+  body[data-tutorial-step="marketplace-link-selection"] [data-slot="sheet-content"] {
+    z-index: 9999 !important;
+  }
+  
+  /* Ensure mobile menu button remains highlighted but clickable during tutorial */
+  body[data-tutorial-step="marketplace-navigation"] [data-tutorial-id="mobile-menu-button"] {
+    position: relative !important;
+    z-index: 10001 !important;
   }
   
   /* Fix portfolio balance section positioning */

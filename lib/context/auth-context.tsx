@@ -23,8 +23,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const mockUser: User = {
   id: '1',
-  name: 'Nathan Reichlin',
-  email: 'nathan.reichlin@example.com'
+  name: 'Nathan',
+  email: 'nathan@statemint.app'
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -39,12 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   const [showLoginDialog, setShowLoginDialog] = useState(false)
-
-  // Debug function to log when login dialog state changes
-  const setShowLoginDialogDebug = (show: boolean) => {
-    console.log('setShowLoginDialog called:', show)
-    setShowLoginDialog(show)
-  }
 
   const login = () => {
     setIsAuthenticated(true)
@@ -68,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, 
       logout,
       showLoginDialog,
-      setShowLoginDialog: setShowLoginDialogDebug
+      setShowLoginDialog
     }}>
       {children}
     </AuthContext.Provider>

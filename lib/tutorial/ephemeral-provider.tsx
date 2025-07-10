@@ -47,7 +47,7 @@ function createTutorialRoot(): HTMLElement {
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.pointerEvents = 'none';
-    container.style.zIndex = '9998';
+    container.style.zIndex = '3000'; // Match CSS --z-tutorial-prompts
     document.body.appendChild(container);
   }
   return container;
@@ -212,6 +212,34 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
     
     return adaptedStep;
   }, [state.isActive, state.currentStepIndex, state.steps, isMobile]);
+
+  // Manage body classes and attributes for tutorial state
+  useEffect(() => {
+    if (!isClient) return;
+    
+    if (state.isActive) {
+      // Add tutorial-active class and data attributes
+      document.body.classList.add('tutorial-active');
+      document.body.setAttribute('data-tutorial-active', 'true');
+      
+      // Add current step ID if available
+      if (currentStep) {
+        document.body.setAttribute('data-tutorial-step', currentStep.id);
+      }
+    } else {
+      // Remove tutorial classes and attributes
+      document.body.classList.remove('tutorial-active');
+      document.body.removeAttribute('data-tutorial-active');
+      document.body.removeAttribute('data-tutorial-step');
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      document.body.classList.remove('tutorial-active');
+      document.body.removeAttribute('data-tutorial-active');
+      document.body.removeAttribute('data-tutorial-step');
+    };
+  }, [isClient, state.isActive, currentStep?.id]);
 
   const contextValue: TutorialContextValue = useMemo(() => ({
     state,

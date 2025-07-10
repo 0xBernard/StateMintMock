@@ -73,23 +73,30 @@ export const useElementTracking = (selector: string, options: {
       return
     }
     
-    const element = document.querySelector(selector)
-    if (!element) return
-    
+    let currentElement: Element | null = null
     let frameId: number | undefined
+    let observer: IntersectionObserver | null = null
+    let resizeObserver: ResizeObserver | null = null
+    let mutationObserver: MutationObserver | null = null
+    
     const updateBounds = () => {
       if (frameId !== undefined) cancelAnimationFrame(frameId)
       
       frameId = requestAnimationFrame(() => {
+        if (currentElement) {
         setState(prev => ({
           ...prev,
-          bounds: element.getBoundingClientRect()
+            bounds: currentElement!.getBoundingClientRect()
         }))
+        }
       })
     }
     
+    const setupObservers = (element: Element) => {
+      currentElement = element
+    
     // Intersection Observer for visibility
-    const observer = new IntersectionObserver(
+      observer = new IntersectionObserver(
       ([entry]) => {
         setState(prev => ({
           ...prev,
@@ -112,7 +119,7 @@ export const useElementTracking = (selector: string, options: {
     
     // Resize Observer with debouncing
     let resizeTimeout: NodeJS.Timeout
-    const resizeObserver = new ResizeObserver(() => {
+      resizeObserver = new ResizeObserver(() => {
       if (!state.isVisible) return
       
       clearTimeout(resizeTimeout)
@@ -120,20 +127,73 @@ export const useElementTracking = (selector: string, options: {
     })
     
     resizeObserver.observe(element)
+      
+      // Initial bounds update
+      updateBounds()
+    }
+    
+    const cleanupObservers = () => {
+      if (observer) {
+        observer.disconnect()
+        observer = null
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+        resizeObserver = null
+      }
+      if (frameId !== undefined) {
+        cancelAnimationFrame(frameId)
+        frameId = undefined
+      }
+      currentElement = null
+    }
+    
+    const checkForElement = () => {
+      const element = document.querySelector(selector)
+      
+      if (element && element !== currentElement) {
+        console.log('[ElementTracking] Found new element for selector:', selector)
+        cleanupObservers()
+        setupObservers(element)
+      } else if (!element && currentElement) {
+        console.log('[ElementTracking] Element disappeared for selector:', selector)
+        cleanupObservers()
+        setState({
+          isVisible: false,
+          bounds: null,
+          intersection: null
+        })
+      }
+    }
+    
+    // Initial check
+    checkForElement()
+    
+    // Set up mutation observer to watch for DOM changes
+    mutationObserver = new MutationObserver(() => {
+      checkForElement()
+    })
+    
+    // Watch for changes in the entire document
+    mutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: false
+    })
     
     // Scroll listener: when the element is visible, update bounds on scroll for accurate highlight positioning
     const handleScroll = () => {
-      if (!state.isVisible) return;
+      if (!state.isVisible || !currentElement) return;
       updateBounds();
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     
     return () => {
-      observer.disconnect()
-      resizeObserver.disconnect()
-      if (frameId !== undefined) cancelAnimationFrame(frameId)
-      clearTimeout(resizeTimeout)
+      cleanupObservers()
+      if (mutationObserver) {
+        mutationObserver.disconnect()
+      }
       window.removeEventListener('scroll', handleScroll)
     }
   }, [selector, options.rootMargin, options.threshold, options.debounceMs])

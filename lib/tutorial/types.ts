@@ -37,6 +37,7 @@ export interface TutorialStep {
   action?: {
     type: 'click' | 'input' | 'navigation' | 'custom' | 'delay' | 'observe';
     selector?: string;
+    mobileSelector?: string;
     expectedValue?: any;
     navigationPath?: Route;
     autoAdvance?: boolean;

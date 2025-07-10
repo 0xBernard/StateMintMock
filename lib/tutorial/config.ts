@@ -1,6 +1,5 @@
 import { type Route } from 'next';
 import { TutorialStep } from './types';
-import { useTutorialStore } from './store';
 
 // Update the default configuration for all steps to never show previous buttons
 const defaultStepConfig = {
@@ -30,8 +29,11 @@ export const tutorialSteps: TutorialStep[] = [
     id: 'login-prompt',
     title: 'Login Required',
     content: "Click the 'Login' button in the header to open the login dialog.",
+    mobileContent: "Click the 'Login' button in the portfolio card above to sign in.",
     targetElementSelector: '[data-tutorial-id="header-login-button"]',
+    mobileTargetSelector: '[data-tutorial-id="marketplace-portfolio-login-button"]',
     promptPlacement: 'bottom-end',
+    mobilePromptPlacement: 'bottom',
     isModal: true,
     highlightPadding: 12,
     showNextButton: false,
@@ -45,13 +47,19 @@ export const tutorialSteps: TutorialStep[] = [
       console.log('Setting up login step');
       await new Promise(resolve => setTimeout(resolve, 1000));
       return new Promise(resolve => {
+        // Check for the appropriate login button based on viewport
+        const isMobile = window.innerWidth < 1024;
+        const selector = isMobile 
+          ? '[data-tutorial-id="marketplace-portfolio-login-button"]'
+          : '[data-tutorial-id="header-login-button"]';
+        
         const checkElement = () => {
-          const loginButton = document.querySelector('[data-tutorial-id="header-login-button"]');
+          const loginButton = document.querySelector(selector);
           if (loginButton) {
-            console.log('Login button found, proceeding with tutorial');
+            console.log(`Login button found (${isMobile ? 'mobile' : 'desktop'}), proceeding with tutorial`);
             resolve();
           } else {
-            console.log('Login button not found, waiting...');
+            console.log(`Login button not found (${isMobile ? 'mobile' : 'desktop'}), waiting...`);
             setTimeout(checkElement, 300);
           }
         };
@@ -474,10 +482,8 @@ export const tutorialSteps: TutorialStep[] = [
       return new Promise((resolve) => setTimeout(resolve, 500));
     },
     onAfterStep: async () => {
-      const { stopTutorial: actualStopTutorial } = useTutorialStore.getState();
-      if (actualStopTutorial) {
-        actualStopTutorial();
-      }
+      // Tutorial will automatically complete when this step finishes
+      // No need to manually call stopTutorial in the new system
       return new Promise((resolve) => setTimeout(resolve, 500));
     }
   },
