@@ -1,5 +1,3 @@
-// Export core tutorial components
-export { TutorialProvider, useTutorial } from './tutorial-provider';
-export { TutorialOverlay } from './tutorial-overlay';
-export { TutorialActionHandler } from './tutorial-action-handler';
-export { TutorialButton } from './tutorial-button'; 
+// Export current tutorial components
+export { TutorialButton } from './tutorial-button-enhanced';
+export { ClientTutorialWrapper } from './client-tutorial-wrapper'; 

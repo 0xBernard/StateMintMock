@@ -10,6 +10,7 @@ import { AddFundsProvider } from '@/lib/context/add-funds-context';
 import { ClientTutorialWrapper } from '@/components/tutorial/client-tutorial-wrapper';
 import { AddFundsDialogWrapper } from '@/components/shared/add-funds-dialog-wrapper';
 import { Toaster } from 'sonner';
+import { Toaster as RadixToaster } from '@/components/ui/toaster';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -36,6 +37,7 @@ export default function RootLayout({
                   {children}
                   <AddFundsDialogWrapper />
                   <Toaster />
+                  <RadixToaster />
                 </ClientTutorialWrapper>
               </AddFundsProvider>
             </MarketProvider>

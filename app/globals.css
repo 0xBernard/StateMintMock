@@ -594,4 +594,19 @@ body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] 
     align-items: center !important;
     justify-content: center !important;
   }
+  
+  /* Ensure toasts are properly positioned on mobile and above tutorial */
+  [data-radix-toast-viewport] {
+    top: 1rem !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    width: auto !important;
+    z-index: 10000 !important; /* Above tutorial prompts */
+  }
+  
+  /* Make toast notifications more compact on mobile */
+  [data-radix-toast-viewport] [role="alert"] {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
 }
