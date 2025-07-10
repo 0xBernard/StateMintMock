@@ -41,10 +41,10 @@ export function CoinCard({
 
   return (
     <Card 
-      className="coin-card overflow-hidden bg-card border-border hover:border-amber-600/50 transition-colors cursor-pointer"
+      className="coin-card overflow-hidden bg-card border-border hover:border-amber-600/50 transition-colors cursor-pointer p-0"
       onClick={handleCardClick}
     >
-      <div className="relative aspect-[2/1] bg-black">
+      <div className="relative aspect-[2/1] bg-black rounded-t-lg overflow-hidden">
         <Image
           src={image}
           alt={name}
@@ -57,15 +57,15 @@ export function CoinCard({
         </div>
       </div>
 
-      <CardContent className="p-3 sm:p-4">
-        <h3 className="text-base sm:text-lg font-semibold text-amber-400 mb-1 truncate" title={name}>
+      <CardContent className="p-1.5 sm:p-4">
+        <h3 className="text-sm sm:text-lg font-semibold text-amber-400 mb-0.5 sm:mb-1 truncate" title={name}>
           {name}
         </h3>
-        <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 line-clamp-2" title={description}>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-1.5 sm:mb-4 line-clamp-1 sm:line-clamp-2" title={description}>
           {description}
         </p>
 
-        <div className="space-y-3">
+        <div className="space-y-1.5 sm:space-y-3">
           <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-amber-500 rounded-full"
@@ -79,7 +79,7 @@ export function CoinCard({
           </div>
         </div>
 
-        <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
+        <div className="mt-1.5 sm:mt-4 space-y-0.5 sm:space-y-2">
           <div className="flex justify-between items-baseline">
             <div className="text-xs sm:text-sm text-muted-foreground">Current Price:</div>
             <div className="text-base sm:text-lg font-bold text-amber-400">
@@ -98,33 +98,20 @@ export function CoinCard({
         </div>
       </CardContent>
 
-      <CardFooter className="p-3 sm:p-4 pt-0 flex justify-between items-center">
-        <div className="text-xs sm:text-sm text-amber-400/60">
+      <CardFooter className="p-1.5 sm:p-4 pt-0 flex justify-between items-center">
+        <div className="text-xs text-amber-400/60">
           {metrics.availableShares} shares available
         </div>
-        <div className="flex gap-1.5 sm:gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="border-amber-600/30 hover:border-amber-500 hover:bg-amber-950/50 text-amber-400 text-xs sm:text-sm px-2 sm:px-3"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/coin/${id}`);
-            }}
-          >
-            Details
-          </Button>
-          <Button 
-            size="sm"
-            className="bg-amber-600 hover:bg-amber-500 text-black font-semibold text-xs sm:text-sm px-2 sm:px-3"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/coin/${id}?action=buy`);
-            }}
-          >
-            Invest
-          </Button>
-        </div>
+        <Button 
+          size="sm"
+          className="bg-amber-600 hover:bg-amber-500 text-black font-semibold text-xs sm:text-sm px-4 sm:px-6 h-8 sm:h-auto"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/coin/${id}?action=buy`);
+          }}
+        >
+          Invest
+        </Button>
       </CardFooter>
     </Card>
   );

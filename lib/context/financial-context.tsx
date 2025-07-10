@@ -20,7 +20,7 @@ interface FinancialContextType {
 
 const FinancialContext = createContext<FinancialContextType | undefined>(undefined);
 
-const INITIAL_BALANCE = 127.00; // Starting balance for demo
+const INITIAL_BALANCE = 100000.00; // Starting balance for demo
 
 export function FinancialProvider({ children }: { children: ReactNode }) {
   const [availableBalance, setAvailableBalance] = useState<number>(() => {

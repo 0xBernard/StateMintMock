@@ -82,8 +82,8 @@ export function LoginDialog() {
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-amber-400">Welcome to StateMint</h2>
             <p className="text-sm text-muted-foreground">
-              Sign in to start trading collectible shares
-            </p>
+            Sign in to start trading collectible shares
+          </p>
           </div>
           
           <Button 

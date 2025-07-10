@@ -255,7 +255,7 @@ const TutorialHighlight: React.FC<{
   if (!actualBounds) {
     console.log('[TutorialHighlight] No bounds available for:', target, { bounds, forcedBounds, isVisible });
     return null;
-  }
+    }
 
   console.log('[TutorialHighlight] Rendering highlight for:', target, { 
     actualBounds, 

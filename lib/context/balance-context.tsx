@@ -10,7 +10,7 @@ interface BalanceContextType {
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
 
 export function BalanceProvider({ children }: { children: ReactNode }) {
-  const [availableBalance, setAvailableBalance] = useState(127.00);
+  const [availableBalance, setAvailableBalance] = useState(100000.00);
 
   return (
     <BalanceContext.Provider value={{ availableBalance, setAvailableBalance }}>

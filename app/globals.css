@@ -459,9 +459,14 @@ body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] 
   z-index: var(--z-dialogs) !important;
 }
 
-/* Ensure mobile menu closes properly when dialogs open */
+/* Ensure mobile menu always has proper z-index above portfolio card */
 [data-slot="sheet-content"] {
-  z-index: calc(var(--z-dialogs) - 100) !important;
+  z-index: var(--z-mobile-menu) !important;
+}
+
+/* During tutorial with dialogs, still ensure mobile menu is above dialogs but allow dialogs to show */
+.tutorial-active [data-slot="sheet-content"] {
+  z-index: var(--z-mobile-menu) !important;
 }
 
 /* Prevent sheet overlay conflicts with dialog overlays */
@@ -586,6 +591,12 @@ body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] 
   [data-tutorial-id="mobile-portfolio-widget"] {
     position: relative !important;
     z-index: 1 !important;
+  }
+
+  /* Ensure hamburger menu button is above portfolio card */
+  [data-tutorial-id="mobile-menu-button"] {
+    position: relative !important;
+    z-index: 1200 !important; /* Above mobile menu z-index of 1100 */
   }
   
   /* Ensure login dialog is properly centered on mobile */
