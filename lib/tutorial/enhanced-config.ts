@@ -7,7 +7,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'welcome-on-marketplace',
     title: 'Welcome to StateMint!',
-    content: 'Welcome to StateMint! We are going to walk you through the site, and purchasing a coin.',
+    content: 'Welcome to StateMint! We are going to walk you through the site, and purchasing shares of acoin.',
     targetElementSelector: 'body',
     promptPlacement: 'center',
     isModal: true,
@@ -207,7 +207,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'portfolio-overview',
     title: "Your Portfolio",
-    content: "This is your portfolio. Here you can see the assets you own and manage your funds. We've started you out with a few coins for this tutorial.",
+    content: "This is your portfolio. Here you can see the assets you own and manage your funds. We've started you out with shares of a few coins for this tutorial.",
     mobileContent: "Your portfolio shows your coin investments. Click Next to continue.",
     targetElementSelector: '[data-tutorial-id="portfolio-coin-list-section"]',
     promptPlacement: 'top',
@@ -238,7 +238,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'portfolio-stats-summary-highlight',
     title: "Portfolio Snapshot",
-    content: "At the top of the page, you can see your total portfolio value, unrealized profit/loss, and the number of unique coins you hold.",
+    content: "At the top of the page, you can see your total portfolio value, unrealized profit/loss, and the number of unique coin shares you hold.",
     targetElementSelector: '[data-tutorial-id="portfolio-stats-summary"]',
     promptPlacement: 'bottom',
     mobilePromptPlacement: 'bottom',
@@ -388,7 +388,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'deposit-confirmation',
     title: "Deposit Successful! ✅",
-    content: "We use Coinbase Pay to handle deposits and withdrawals to your bank. You'll be able to send USDC to your wallet as well if you'd prefer.",
+    content: "We use Coinbase Pay to handle deposits and withdrawals to your bank. You'll be able to send USDC to your wallet if you'd prefer.",
     targetElementSelector: 'body',
     promptPlacement: 'center',
     isModal: true,
@@ -402,7 +402,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'marketplace-navigation',
     title: "Navigate to Marketplace",
-    content: "Now let's go back to the marketplace to see what collectibles are available for investment.",
+    content: "Now let's go back to the marketplace to see what coins are available.",
     targetElementSelector: 'body',
     promptPlacement: 'center',
     isModal: true,
