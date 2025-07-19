@@ -28,6 +28,10 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
+      <head>
+        {/* Site icon */}
+        <link rel="icon" href="/images/33759.png" sizes="any" type="image/png" />
+      </head>
       <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
           <FinancialProvider>
