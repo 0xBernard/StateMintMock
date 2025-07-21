@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       spreadsheetId,
       range: 'Sheet1!A:D', // Assumes your sheet is named 'Sheet1'
       valueInputOption: 'USER_ENTERED',
-      resource: {
+      requestBody: {
         values: [[new Date().toISOString(), name, email, capitalRange]],
       },
     });
