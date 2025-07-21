@@ -106,7 +106,7 @@ export function WaitlistForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="capital-range">
-              {userType === 'collector' ? 'Average Collection Value' : 'Estimated Annual Volume'}
+              Estimated Annual Volume
             </Label>
             <Select onValueChange={setCapitalRange} value={capitalRange} required>
               <SelectTrigger id="capital-range">
