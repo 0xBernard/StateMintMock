@@ -64,19 +64,19 @@ export default function WaitlistPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                     <div className="flex items-center gap-3 text-gray-400">
                       <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>AI-powered valuations</span>
+                      <span>Maximize liquidity and resale value</span>
                     </div>
                     <div className="flex items-center gap-3 text-gray-400">
                       <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>Secure marketplace</span>
+                      <span>Secure marketplace and expert authentication</span>
                     </div>
                     <div className="flex items-center gap-3 text-gray-400">
                       <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>Expert authentication</span>
+                      <span>Significatly lower fees vs. all major platforms</span>
                     </div>
                     <div className="flex items-center gap-3 text-gray-400">
                       <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>Portfolio tracking</span>
+                      <span>Portfolio tracking and advanced analytics</span>
                     </div>
                   </div>
                 </div>

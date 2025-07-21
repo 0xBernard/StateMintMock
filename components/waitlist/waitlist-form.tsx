@@ -8,14 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { capitalRanges } from '@/lib/waitlist/config';
+import { dealerCapitalRanges } from '@/lib/waitlist/dealer-config';
 import { useToast } from '../ui/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export function WaitlistForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [userType, setUserType] = useState('collector');
   const [capitalRange, setCapitalRange] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const ranges = userType === 'collector' ? capitalRanges : dealerCapitalRanges;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,7 +32,7 @@ export function WaitlistForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, capitalRange }),
+        body: JSON.stringify({ name, email, userType, capitalRange }),
       });
 
       if (!response.ok) {
@@ -82,13 +87,33 @@ export function WaitlistForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="capital-range">Average Collection Value</Label>
+            <Label>I am a...</Label>
+            <RadioGroup
+              defaultValue="collector"
+              className="flex space-x-4"
+              onValueChange={setUserType}
+              value={userType}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="collector" id="collector" />
+                <Label htmlFor="collector">Collector</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="dealer" id="dealer" />
+                <Label htmlFor="dealer">Dealer</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="capital-range">
+              {userType === 'collector' ? 'Average Collection Value' : 'Estimated Annual Volume'}
+            </Label>
             <Select onValueChange={setCapitalRange} value={capitalRange} required>
               <SelectTrigger id="capital-range">
                 <SelectValue placeholder="Select a range" />
               </SelectTrigger>
               <SelectContent position="popper" sideOffset={4} align="center">
-                {capitalRanges.map((range) => (
+                {ranges.map((range) => (
                   <SelectItem key={range.value} value={range.value}>
                     {range.label}
                   </SelectItem>

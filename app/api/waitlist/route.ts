@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, capitalRange } = await req.json();
+    const { name, email, userType, capitalRange } = await req.json();
 
-    if (!name || !email || !capitalRange) {
+    if (!name || !email || !userType || !capitalRange) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       range: 'Sheet1!A:D', // Assumes your sheet is named 'Sheet1'
       valueInputOption: 'USER_ENTERED',
       requestBody: {
-        values: [[new Date().toISOString(), name, email, capitalRange]],
+        values: [[new Date().toISOString(), name, email, userType, capitalRange]],
       },
     });
 
