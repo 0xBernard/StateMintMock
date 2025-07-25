@@ -7,7 +7,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'welcome-on-marketplace',
     title: 'Welcome to StateMint!',
-    content: 'Welcome to StateMint! We are going to walk you through the site, and purchasing shares of acoin.',
+    content: 'Welcome to StateMint! We are going to walk you through the site, and purchasing shares of a coin.',
     targetElementSelector: 'body',
     promptPlacement: 'center',
     isModal: true,
@@ -17,6 +17,17 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     onBeforeShow: async () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
     },
+  },
+  {
+    id: 'fractional-ownership-intro',
+    title: "Own Premium Collectibles, Fractionally",
+    content: "Unlike traditional markets where rare coins cost $100K+, StateMint lets you own shares of high-value collectibles starting from just a few dollars. You're about to experience how we're democratizing access to assets that historically returned 12-50% annually.",
+    targetElementSelector: 'body',
+    promptPlacement: 'center',
+    isModal: true,
+    overlayType: 'dark',
+    showNextButton: true,
+    showPreviousButton: false,
   },
   {
     id: 'login-prompt',
@@ -458,6 +469,26 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     },
   },
   {
+    id: 'fee-advantage-highlight',
+    title: "Save 25% on Fees",
+    content: "Traditional auction houses charge 20-30% in total fees. StateMint charges just 5% for full coin purchases or initial listings, and only 1% for trading fractional shares - similar to stock trading! That's up to 25% more money staying in your pocket.",
+    targetElementSelector: '[data-tutorial-id="buy-widget-container"]',
+    promptPlacement: 'left',
+    mobilePromptPlacement: 'top',
+    isModal: false,
+    overlayType: 'spotlight',
+    showNextButton: true,
+    showPreviousButton: false,
+    spotlightPadding: 12,
+    mobileSpotlightPadding: 16,
+    waitForElement: true,
+    action: { 
+      type: 'click', 
+      selector: '[data-tutorial-id="prompt-next-button"]',
+      autoAdvance: true,
+    },
+  },
+  {
     id: 'coin-detail-overview',
     title: "Coin Details Page",
     content: "Perfect! This is the coin detail page. Here you can analyze the investment opportunity. Let's start by examining the Order Book.",
@@ -579,7 +610,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'purchase-widget-highlight',
-    title: "Make Your Investment",
+    title: "Invest in Shares, Not Whole Coins",
     content: "Now let's make your first investment! Use this trading widget to buy some shares. Enter the number of shares you want and optionally set a future sell price, then click the buy button.",
     targetElementSelector: '[data-tutorial-id="buy-widget-container"]',
     promptPlacement: 'left',
@@ -620,8 +651,8 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'tutorial-complete',
-    title: "Tutorial Complete! 🎉",
-    content: "Congratulations! You've completed the StateMint tutorial. You're now ready to explore and invest in fractionalized collectibles on your own.",
+    title: "Welcome to the Future of Collectible Investing!",
+    content: "You've just experienced how StateMint is revolutionizing a $300B market. With fractional ownership, 75% lower fees, instant liquidity, and verified authentication, you're ready to build a portfolio of assets that have historically outperformed traditional markets. ",
     targetElementSelector: 'body',
     promptPlacement: 'center',
     isModal: true,
