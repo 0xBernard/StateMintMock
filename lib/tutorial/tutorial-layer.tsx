@@ -4,7 +4,8 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation';
 import { TutorialStep } from './types';
 import { useElementTracking, useTutorialCleanup } from './hooks';
-import { AdvancedZIndexManager } from './z-index-manager';
+import { ZIndexManager } from './z-index-manager';
+import { debug } from '@/lib/utils/debug';
 
 interface TutorialLayerProps {
   step: TutorialStep;
@@ -19,34 +20,15 @@ const TutorialOverlay: React.FC<{
   target?: string;
   spotlightPadding?: number;
 }> = React.memo(({ type, target, spotlightPadding = 8 }) => {
+  // Enhanced tracking with aggressive detection for tab content and dynamic elements
   const { bounds, isVisible } = useElementTracking(target || '', {
-    debounceMs: 50
+    debounceMs: 50,
+    rootMargin: '200px', // Larger margin to catch tab content
+    threshold: [0, 0.1, 1.0] // Multiple thresholds for better detection
   });
   
-  const [forcedBounds, setForcedBounds] = React.useState<DOMRect | null>(null);
-  
-  // Force bounds calculation for tab content
-  React.useEffect(() => {
-    if (!target) return;
-    
-    const checkElementBounds = () => {
-      const element = document.querySelector(target);
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          setForcedBounds(rect);
-          console.log('[TutorialOverlay] Forced bounds for', target, rect);
-        }
-      }
-    };
-    
-    checkElementBounds();
-    const interval = setInterval(checkElementBounds, 200); // Reduced frequency
-    return () => clearInterval(interval);
-  }, [target]);
-  
-  // Use forced bounds if available, fallback to tracked bounds
-  const actualBounds = forcedBounds || bounds;
+  // Use enhanced bounds from the optimized tracking hook
+  const actualBounds = bounds;
 
   // Memoize expensive calculations
   const overlayStyle = useMemo(() => {
@@ -59,7 +41,7 @@ const TutorialOverlay: React.FC<{
         background: 'rgba(0, 0, 0, 0.7)',
         position: 'fixed' as const,
         inset: 0,
-        zIndex: 1000, // --z-tutorial-backdrop
+        zIndex: 'var(--z-tutorial-backdrop)',
         pointerEvents: 'auto' as const // Block interactions for non-spotlight overlays
       };
     }
@@ -67,7 +49,7 @@ const TutorialOverlay: React.FC<{
     return {
       position: 'fixed' as const,
       inset: 0,
-      zIndex: 1000, // --z-tutorial-backdrop
+      zIndex: 'var(--z-tutorial-backdrop)',
       background: 'transparent',
       pointerEvents: 'auto' as const // We'll handle pointer events in the SVG
     };
@@ -89,18 +71,18 @@ const TutorialOverlay: React.FC<{
     }
   }, [type, target]);
 
-  if (!isVisible && target && !forcedBounds) return null;
+  if (!isVisible && target) return null;
 
   // For spotlight, use SVG mask approach with interaction blocking
   if (type === 'spotlight' && actualBounds) {
-    console.log('[TutorialOverlay] Rendering spotlight for', target, { actualBounds, usingForcedBounds: !!forcedBounds });
+    debug.log('[TutorialOverlay] Rendering spotlight for', target, { actualBounds });
     
     return (
       <>
         {/* Visual overlay with SVG mask - no pointer events */}
         <div style={{ ...overlayStyle, pointerEvents: 'none' }}>
           <svg 
-            style={{ position: 'fixed', inset: 0, zIndex: 1000, pointerEvents: 'none' }} // --z-tutorial-backdrop
+            style={{ position: 'fixed', inset: 0, zIndex: 'var(--z-tutorial-backdrop)', pointerEvents: 'none' }}
             width="100%" 
             height="100%"
           >
@@ -135,7 +117,7 @@ const TutorialOverlay: React.FC<{
             left: 0,
             right: 0,
             height: actualBounds.y - spotlightPadding,
-            zIndex: 1000, // --z-tutorial-backdrop
+            zIndex: 'var(--z-tutorial-backdrop)',
             pointerEvents: 'auto',
             background: 'transparent'
           }}
@@ -151,7 +133,7 @@ const TutorialOverlay: React.FC<{
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 1000, // --z-tutorial-backdrop
+            zIndex: 'var(--z-tutorial-backdrop)',
             pointerEvents: 'auto',
             background: 'transparent'
           }}
@@ -167,7 +149,7 @@ const TutorialOverlay: React.FC<{
             left: 0,
             width: actualBounds.x - spotlightPadding,
             height: actualBounds.height + spotlightPadding * 2,
-            zIndex: 1000, // --z-tutorial-backdrop
+            zIndex: 'var(--z-tutorial-backdrop)',
             pointerEvents: 'auto',
             background: 'transparent'
           }}
@@ -183,7 +165,7 @@ const TutorialOverlay: React.FC<{
             left: actualBounds.x + actualBounds.width + spotlightPadding,
             right: 0,
             height: actualBounds.height + spotlightPadding * 2,
-            zIndex: 1000, // --z-tutorial-backdrop
+            zIndex: 'var(--z-tutorial-backdrop)',
             pointerEvents: 'auto',
             background: 'transparent'
           }}
@@ -213,97 +195,46 @@ const TutorialHighlight: React.FC<{
   target: string;
   padding?: number;
 }> = React.memo(({ target, padding = 8 }) => {
+  // Enhanced element tracking replaces polling
   const { bounds, isVisible } = useElementTracking(target, {
-    debounceMs: 50
+    debounceMs: 50,
+    rootMargin: '200px', // Larger margin to catch tab content
+    threshold: [0, 0.1, 1.0] // Multiple thresholds for better detection
   });
 
-  // For tab content, we need to check if the element exists even if not visible
-  const [elementExists, setElementExists] = React.useState(false);
-  const [forcedBounds, setForcedBounds] = React.useState<DOMRect | null>(null);
-  
-  React.useEffect(() => {
-    const checkElement = () => {
-      const element = document.querySelector(target);
-      const exists = !!element;
-      setElementExists(exists);
-      
-      // For tab content, force bounds calculation
-      if (exists && element) {
-        const rect = element.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          setForcedBounds(rect);
-          console.log('[TutorialHighlight] Forced bounds for', target, rect);
-        }
-      }
-    };
+  // Apply enhanced glow effect to the target element itself (for coin cards)
+  // This MUST be called before any conditional returns to avoid Hooks order violation
+  useEffect(() => {
+    if (!target || !bounds) return;
     
-    checkElement();
-    const interval = setInterval(checkElement, 200); // Reduced frequency
-    return () => clearInterval(interval);
-  }, [target]);
+    const targetElement = document.querySelector(target);
+    if (targetElement) {
+      // Apply enhanced glow class
+      targetElement.classList.add('tutorial-enhanced-glow');
+      
+      return () => {
+        // Cleanup enhanced glow
+        targetElement.classList.remove('tutorial-enhanced-glow');
+      };
+    }
+  }, [target, bounds]);
 
-  // Don't render if element doesn't exist
-  if (!elementExists) {
-    console.log('[TutorialHighlight] Element does not exist:', target);
+  // Don't render if element doesn't exist (bounds will be null if element not found)
+  // This check happens AFTER all hooks are called
+  if (!bounds) {
     return null;
   }
 
-  // Use forced bounds if available, fallback to tracked bounds
-  const actualBounds = forcedBounds || bounds;
+  // Use enhanced bounds from the optimized tracking hook
+  const actualBounds = bounds;
 
-  // For tab content, be more aggressive about showing highlights
-  if (!actualBounds) {
-    console.log('[TutorialHighlight] No bounds available for:', target, { bounds, forcedBounds, isVisible });
-    return null;
-    }
-
-  console.log('[TutorialHighlight] Rendering highlight for:', target, { 
+  debug.log('[TutorialHighlight] Enhanced glow applied to target:', target, { 
     actualBounds, 
-    isVisible, 
-    elementExists,
-    usingForcedBounds: !!forcedBounds 
+    isVisible
   });
 
-  // Mobile-only clamp (<= 640px) so highlight never starts off-screen
-  const isNarrowMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-  const gutter = 8;
-  let left = actualBounds.x - padding;
-  let top = actualBounds.y - padding;
-  let width = actualBounds.width + padding * 2;
-  let height = actualBounds.height + padding * 2;
-
-  if (isNarrowMobile) {
-    // Ensure a small left gutter
-    if (left < gutter) {
-      width -= gutter - left;
-      left = gutter;
-    }
-    // Prevent overflow on right side
-    if (left + width > window.innerWidth - gutter) {
-      width = window.innerWidth - gutter - left;
-    }
-    // Similar protection on top / bottom is rarely needed; add if desired
-  }
-
-  return (
-    <div
-      className="tutorial-highlight-border"
-      style={{
-        position: 'fixed',
-        top,
-        left,
-        width,
-        height,
-        border: '3px solid #f2b418',
-        borderRadius: '8px',
-        boxShadow: '0 0 20px rgba(242, 180, 24, 0.5), inset 0 0 20px rgba(242, 180, 24, 0.1)',
-        pointerEvents: 'none',
-        zIndex: 3001, // --z-tutorial-prompts + 1 for highlights
-        animation: 'tutorial-highlight-pulse 2s ease-in-out infinite',
-        transition: 'all 0.3s ease-in-out'
-      }}
-    />
-  );
+  // No rendered div needed - the enhanced glow is applied directly to the target element via CSS class
+  return null;
 }, (prevProps, nextProps) => {
   return (
     prevProps.target === nextProps.target &&
@@ -321,38 +252,24 @@ const TutorialPrompt: React.FC<{
   onSkip: () => void;
 }> = ({ step, onNext, onPrevious, onSkip }) => {
   const router = useRouter();
-  const { bounds } = useElementTracking(step.targetElementSelector);
-  const [forcedBounds, setForcedBounds] = React.useState<DOMRect | null>(null);
   
-  // Force bounds calculation for tab content
-  React.useEffect(() => {
-    const checkElementBounds = () => {
-      const element = document.querySelector(step.targetElementSelector);
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          setForcedBounds(rect);
-          console.log('[TutorialPrompt] Forced bounds for', step.targetElementSelector, rect);
-        }
-      }
-    };
-    
-    checkElementBounds();
-    const interval = setInterval(checkElementBounds, 200); // Reduced frequency
-    return () => clearInterval(interval);
-  }, [step.targetElementSelector]);
+  // Enhanced element tracking replaces polling
+  const { bounds } = useElementTracking(step.targetElementSelector, {
+    debounceMs: 50,
+    rootMargin: '200px', // Larger margin to catch tab content
+    threshold: [0, 0.1, 1.0] // Multiple thresholds for better detection
+  });
   
-  // Use forced bounds if available, fallback to tracked bounds
-  const actualBounds = forcedBounds || bounds;
+  // Use enhanced bounds from the optimized tracking hook
+  const actualBounds = bounds;
   
   // Calculate prompt position
   const promptStyle = useMemo(() => {
     if (step.isModal || !actualBounds) {
-      console.log('[TutorialPrompt] Using modal positioning for:', step.id, { 
+      debug.log('[TutorialPrompt] Using modal positioning for:', step.id, { 
         isModal: step.isModal, 
         hasActualBounds: !!actualBounds,
-        bounds,
-        forcedBounds 
+        bounds
       });
       // Center modal
       return {
@@ -360,15 +277,14 @@ const TutorialPrompt: React.FC<{
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 3002, // --z-tutorial-prompts + 2 for prompts (highest)
+        zIndex: 'var(--z-tutorial-prompts)',
         pointerEvents: 'auto' as const
       };
     }
 
-    console.log('[TutorialPrompt] Using relative positioning for:', step.id, { 
+    debug.log('[TutorialPrompt] Using relative positioning for:', step.id, { 
       actualBounds, 
-      placement: step.promptPlacement,
-      usingForcedBounds: !!forcedBounds 
+      placement: step.promptPlacement
     });
 
     // Position relative to target element
@@ -464,10 +380,10 @@ const TutorialPrompt: React.FC<{
       top,
       left,
       transform,
-      zIndex: 3002, // --z-tutorial-prompts + 2 for prompts (highest)
+      zIndex: 'var(--z-tutorial-prompts)',
       pointerEvents: 'auto' as const
     };
-  }, [actualBounds, step.isModal, step.promptPlacement, step.mobilePromptPlacement, bounds, forcedBounds]);
+  }, [actualBounds, step.isModal, step.promptPlacement, step.mobilePromptPlacement, bounds]);
 
   return (
     <div 
@@ -506,7 +422,7 @@ const TutorialPrompt: React.FC<{
             onClick={() => {
               // Special handling for marketplace-navigation step
               if (step.id === 'marketplace-navigation') {
-                console.log('[Tutorial Layer] Marketplace navigation - navigating to /marketplace and advancing tutorial');
+                debug.log('[Tutorial Layer] Marketplace navigation - navigating to /marketplace and advancing tutorial');
                 // Use Next.js router for client-side navigation to maintain state
                 router.push('/marketplace');
                 // Advance tutorial after navigation
@@ -537,14 +453,14 @@ export const TutorialLayer: React.FC<TutorialLayerProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const zIndexManagerRef = useRef<AdvancedZIndexManager | undefined>(undefined);
+  const zIndexManagerRef = useRef<ZIndexManager | undefined>(undefined);
   const { registerCleanup } = useTutorialCleanup();
   const prevStepIdRef = useRef<string | null>(null);
 
   // Initialize z-index manager
   useEffect(() => {
     if (!zIndexManagerRef.current) {
-      zIndexManagerRef.current = new AdvancedZIndexManager();
+      zIndexManagerRef.current = new ZIndexManager();
     }
   }, []);
 
@@ -602,13 +518,13 @@ export const TutorialLayer: React.FC<TutorialLayerProps> = ({
   useEffect(() => {
     // Execute onBeforeShow
     if (step.onBeforeShow) {
-      Promise.resolve(step.onBeforeShow()).catch(console.error);
+      Promise.resolve(step.onBeforeShow()).catch(debug.error);
     }
 
     return () => {
       // Execute onAfterShow
       if (step.onAfterShow) {
-        Promise.resolve(step.onAfterShow()).catch(console.error);
+        Promise.resolve(step.onAfterShow()).catch(debug.error);
       }
     };
   }, [step.id, step.onBeforeShow, step.onAfterShow]);

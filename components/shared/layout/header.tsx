@@ -13,19 +13,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import { SheetTrigger } from '@/components/ui/sheet';
+import { 
+  EnhancedMobileMenu, 
+  MobileMenuHeader, 
+  MobileMenuTitle, 
+  MobileMenuContent, 
+  MobileMenuFooter 
+} from './enhanced-mobile-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, Menu, User, Wallet, Home, ShoppingBag, Folder, Plus } from 'lucide-react';
 import { LoginDialog } from '@/components/auth/login-dialog';
+import { AddFundsDialogWrapper } from '@/components/shared/add-funds-dialog-wrapper';
 import { useFinancial } from '@/lib/context/financial-context';
 import { usePortfolio } from '@/lib/context/portfolio-context';
 import { useAddFunds } from '@/lib/context/add-funds-context';
+import { debug } from '@/lib/utils/debug';
 
 const navigation = [
   { name: 'Marketplace', href: '/marketplace', enabled: true, icon: ShoppingBag },
@@ -71,7 +74,7 @@ export function Header() {
   };
 
   const handleAddFundsClick = () => {
-    console.log('[Header] Add Funds button clicked');
+    debug.log('[Header] Add Funds button clicked');
     openAddFundsDialog();
     setIsMobileMenuOpen(false); // Close mobile menu when opening Add Funds dialog
   };
@@ -83,146 +86,148 @@ export function Header() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
               {/* Mobile Menu Button */}
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="lg:hidden mr-2 h-10 w-10 p-0"
-                    aria-label="Open menu"
-                    data-tutorial-id="mobile-menu-button"
-                  >
-                    <Menu className="h-6 w-6 text-amber-400" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-80 bg-zinc-900 border-amber-600/30 p-0 overflow-hidden">
-                  <div className="flex flex-col h-full overflow-hidden">
-                    <SheetHeader className="p-6 border-b border-amber-600/30">
-                      <SheetTitle className="flex items-center text-2xl font-bold">
-                        <span className="text-white">State</span>
-                        <span className="text-amber-400">Mint</span>
-                      </SheetTitle>
-                    </SheetHeader>
-                    
-                    <div className="flex-1 overflow-y-auto">
-                      {/* User Profile Section */}
-                      {isAuthenticated && user && (
-                        <div className="p-6 border-b border-amber-600/30 relative z-10">
-                          <div className="flex items-center space-x-3 mb-4">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={user.avatarUrl} alt={user.name} />
-                              <AvatarFallback className="bg-amber-600 text-black">
-                                {user.name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-amber-400 font-medium truncate">{user.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                            </div>
-                          </div>
-                          
-                          {/* Balance Information */}
-                          <div className="space-y-2 portfolio-balance-section">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">Available Balance</span>
-                              <span className="text-amber-400 font-medium">
-                                {formatCurrency(availableBalance)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">Portfolio Value</span>
-                              <span className="text-amber-400 font-medium">
-                                {formatCurrency(portfolioValue)}
-                              </span>
-                            </div>
+              <Button
+                variant="ghost"
+                className="lg:hidden mr-2 h-10 w-10 p-0"
+                aria-label="Open menu"
+                data-tutorial-id="mobile-menu-button"
+                onClick={() => setIsMobileMenuOpen(true)}
+              >
+                <Menu className="h-6 w-6 text-amber-400" />
+              </Button>
+
+              {/* Enhanced Mobile Menu with Swipe Support */}
+              <EnhancedMobileMenu 
+                isOpen={isMobileMenuOpen} 
+                onOpenChange={setIsMobileMenuOpen}
+              >
+                <div className="flex flex-col h-full">
+                  <MobileMenuHeader>
+                    <MobileMenuTitle>
+                      <span className="text-white">State</span>
+                      <span className="text-amber-400">Mint</span>
+                    </MobileMenuTitle>
+                  </MobileMenuHeader>
+                  
+                  <MobileMenuContent>
+                    {/* User Profile Section */}
+                    {isAuthenticated && user && (
+                      <div className="p-6 border-b border-amber-600/30 relative z-10">
+                        <div className="flex items-center space-x-3 mb-4">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.avatarUrl} alt={user.name} />
+                            <AvatarFallback className="bg-amber-600 text-black">
+                              {user.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-amber-400 font-medium truncate">{user.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                           </div>
                         </div>
-                      )}
-                      
-                      {/* Navigation Links */}
-                      <nav className="p-6 space-y-2">
-                        <Link
-                          href="/"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center space-x-3 w-full p-3 rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-amber-950/20 transition-colors"
-                        >
-                          <Home className="h-5 w-5" />
-                          <span>Home</span>
-                        </Link>
                         
-                        {navigation.map((item) => {
-                          const isActive = pathname === item.href || (item.href === '/marketplace' && pathname.startsWith('/coin/'));
-                          const Icon = item.icon;
-                          
-                          return (
-                            <Link
-                              key={item.name}
-                              href={item.href}
-                              onClick={(e) => handleNavClick(e, item.enabled, item.href)}
-                              className={`flex items-center space-x-3 w-full p-3 rounded-lg transition-colors ${
-                                isActive
-                                  ? 'text-amber-400 bg-amber-950/30'
-                                  : item.enabled
-                                  ? 'text-muted-foreground hover:text-amber-400 hover:bg-amber-950/20'
-                                  : 'text-muted-foreground/50 cursor-not-allowed'
-                              }`}
-                              data-tutorial-id={item.name === 'Marketplace' ? 'mobile-marketplace-link' : item.name === 'Portfolio' ? 'mobile-portfolio-link' : undefined}
-                            >
-                              {Icon && <Icon className="h-5 w-5" />}
-                              <span>{item.name}</span>
-                              {!item.enabled && (
-                                <span className="ml-auto text-xs bg-amber-600/20 text-amber-400 px-2 py-1 rounded">
-                                  Soon
-                                </span>
-                              )}
-                            </Link>
-                          );
-                        })}
-                      </nav>
-                    </div>
+                        {/* Balance Information */}
+                        <div className="space-y-2 portfolio-balance-section">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Available Balance</span>
+                            <span className="text-amber-400 font-medium">
+                              {formatCurrency(availableBalance)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Portfolio Value</span>
+                            <span className="text-amber-400 font-medium">
+                              {formatCurrency(portfolioValue)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
-                    {/* Bottom Actions */}
-                    <div className="p-6 border-t border-amber-600/30 mt-auto space-y-3">
-                      {isAuthenticated ? (
-                        <>
-                          <Button
-                            onClick={(e) => {
-                              console.log('[Header] Mobile menu Add Funds button clicked', e);
-                              handleAddFundsClick();
-                            }}
-                            className="w-full bg-amber-600 hover:bg-amber-500 text-black font-semibold"
-                            data-tutorial-id="mobile-menu-add-funds-button"
+                    {/* Navigation Links */}
+                    <nav className="p-6 space-y-2">
+                      <Link
+                        href="/"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center space-x-3 w-full p-3 rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-amber-950/20 transition-colors mobile-nav-link"
+                      >
+                        <Home className="h-5 w-5" />
+                        <span>Home</span>
+                      </Link>
+                      
+                      {navigation.map((item) => {
+                        const isActive = pathname === item.href || (item.href === '/marketplace' && pathname.startsWith('/coin/'));
+                        const Icon = item.icon;
+                        
+                        return (
+                          <Link
+                            key={item.name}
+                            href={item.href}
+                            onClick={(e) => handleNavClick(e, item.enabled, item.href)}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg transition-colors mobile-nav-link ${
+                              isActive
+                                ? 'text-amber-400 bg-amber-950/30'
+                                : item.enabled
+                                ? 'text-muted-foreground hover:text-amber-400 hover:bg-amber-950/20'
+                                : 'text-muted-foreground/50 cursor-not-allowed'
+                            }`}
+                            data-tutorial-id={item.name === 'Marketplace' ? 'mobile-marketplace-link' : item.name === 'Portfolio' ? 'mobile-portfolio-link' : undefined}
                           >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Funds
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              logout();
-                              setIsMobileMenuOpen(false);
-                            }}
-                            variant="outline"
-                            className="w-full border-amber-600/30 text-amber-400 hover:bg-amber-950/50"
-                          >
-                            <LogOut className="mr-2 h-4 w-4" />
-                            Sign Out
-                          </Button>
-                        </>
-                      ) : (
+                            {Icon && <Icon className="h-5 w-5" />}
+                            <span>{item.name}</span>
+                            {!item.enabled && (
+                              <span className="ml-auto text-xs bg-amber-600/20 text-amber-400 px-2 py-1 rounded">
+                                Soon
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </nav>
+                  </MobileMenuContent>
+                  
+                  {/* Bottom Actions */}
+                  <MobileMenuFooter>
+                    {isAuthenticated ? (
+                      <>
                         <Button
-                          onClick={() => {
-                            setShowLoginDialog(true);
-                            setIsMobileMenuOpen(false);
+                          onClick={(e) => {
+                            debug.log('[Header] Mobile menu Add Funds button clicked', e);
+                            handleAddFundsClick();
                           }}
                           className="w-full bg-amber-600 hover:bg-amber-500 text-black font-semibold"
+                          data-tutorial-id="mobile-menu-add-funds-button"
                         >
-                          <User className="mr-2 h-4 w-4" />
-                          Log in
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Funds
                         </Button>
-                      )}
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
+                        <Button
+                          onClick={() => {
+                            logout();
+                            setIsMobileMenuOpen(false);
+                          }}
+                          variant="outline"
+                          className="w-full border-amber-600/30 text-amber-400 hover:bg-amber-950/50"
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Sign Out
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        onClick={() => {
+                          setShowLoginDialog(true);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full bg-amber-600 hover:bg-amber-500 text-black font-semibold"
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        Log in
+                      </Button>
+                    )}
+                  </MobileMenuFooter>
+                </div>
+              </EnhancedMobileMenu>
 
               {/* Logo */}
               <Link href="/" className="flex items-center">
@@ -247,7 +252,7 @@ export function Header() {
                         ? 'text-amber-400 border-b-2 border-amber-400'
                         : 'text-muted-foreground hover:text-amber-400'
                     } ${!item.enabled && 'cursor-default opacity-50'}`}
-                    data-tutorial-id={item.name === 'Marketplace' ? 'marketplace-link' : item.name === 'Portfolio' ? 'portfolio-link' : undefined}
+                    data-tutorial-id={item.name === 'Marketplace' ? 'marketplace-link' : item.name === 'Portfolio' ? 'header-portfolio-link' : undefined}
                   >
                     {item.name}
                   </Link>
@@ -330,7 +335,7 @@ export function Header() {
         </div>
       </header>
       <LoginDialog />
-      
+      <AddFundsDialogWrapper />
 
     </>
   );

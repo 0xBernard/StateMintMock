@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { debug } from '@/lib/utils/debug';
 
 interface AddFundsContextType {
   showFundsDialog: boolean;
@@ -15,19 +16,19 @@ export function AddFundsProvider({ children }: { children: React.ReactNode }) {
   const [showFundsDialog, setShowFundsDialog] = useState(false);
 
   const openAddFundsDialog = () => {
-    console.log('[AddFundsContext] Opening Add Funds dialog - current state:', showFundsDialog);
-    console.log('[AddFundsContext] Call stack:', new Error().stack);
+    debug.log('[AddFundsContext] Opening Add Funds dialog - current state:', showFundsDialog);
+    debug.log('[AddFundsContext] Call stack:', new Error().stack);
     setShowFundsDialog(true);
   };
 
   const closeAddFundsDialog = () => {
-    console.log('[AddFundsContext] Closing Add Funds dialog - current state:', showFundsDialog);
+    debug.log('[AddFundsContext] Closing Add Funds dialog - current state:', showFundsDialog);
     setShowFundsDialog(false);
   };
 
   // Debug state changes
   useEffect(() => {
-    console.log('[AddFundsContext] Dialog state changed to:', showFundsDialog);
+    debug.log('[AddFundsContext] Dialog state changed to:', showFundsDialog);
   }, [showFundsDialog]);
 
   return (

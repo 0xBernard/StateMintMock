@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { TutorialState, TutorialAction, TutorialContextValue, TutorialStep, TutorialProviderProps } from './types';
 import { generateSessionId } from './hooks';
 import { useMobileDetection, getMobileAdaptedStep } from './mobile-utils';
+import { debug } from '@/lib/utils/debug';
 
 // Create the tutorial context
 const TutorialContext = createContext<TutorialContextValue | null>(null);
@@ -89,7 +90,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
         const { TutorialLayer: LayerComponent } = await import('./tutorial-layer');
         setTutorialLayer(() => LayerComponent);
       } catch (error) {
-        console.error('Failed to load TutorialLayer:', error);
+        debug.error('Failed to load TutorialLayer:', error);
       }
     };
 
@@ -114,11 +115,11 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
         }
 
         case 'NEXT_STEP': {
-          console.log('🔄 NEXT_STEP dispatch called');
+          debug.log('🔄 NEXT_STEP dispatch called');
           
           // Guard against rapid successive calls
           if (isProcessingRef.current) {
-            console.log('⚠️ Already processing step advancement, ignoring duplicate dispatch');
+            debug.log('⚠️ Already processing step advancement, ignoring duplicate dispatch');
             return prev;
           }
           
@@ -129,20 +130,20 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
             isProcessingRef.current = false;
           }, 200);
           
-          console.log('Current state:', prev);
-          console.log('Current step index:', prev.currentStepIndex);
-          console.log('Total steps:', prev.steps.length);
+          debug.log('Current state:', prev);
+          debug.log('Current step index:', prev.currentStepIndex);
+          debug.log('Total steps:', prev.steps.length);
           
           const nextIndex = calculateNextStep(prev);
-          console.log('Calculated next index:', nextIndex);
+          debug.log('Calculated next index:', nextIndex);
           
           if (nextIndex >= prev.steps.length) {
-            console.log('❌ Tutorial complete - deactivating');
+            debug.log('❌ Tutorial complete - deactivating');
             return { ...prev, isActive: false };
           }
           
-          console.log('✅ Advancing to step index:', nextIndex);
-          console.log('Next step will be:', prev.steps[nextIndex]?.id);
+          debug.log('✅ Advancing to step index:', nextIndex);
+          debug.log('Next step will be:', prev.steps[nextIndex]?.id);
           
           return { ...prev, currentStepIndex: nextIndex };
         }
@@ -202,7 +203,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
     const rawStep = state.steps[state.currentStepIndex];
     const adaptedStep = getMobileAdaptedStep(rawStep);
     
-    console.log('[Tutorial Provider] Step adaptation:', {
+    debug.log('[Tutorial Provider] Step adaptation:', {
       stepId: rawStep.id,
       isMobile,
       originalPlacement: rawStep.promptPlacement,

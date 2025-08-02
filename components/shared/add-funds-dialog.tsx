@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { CreditCard, Building2, QrCode, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import { useFinancial } from '@/lib/context/financial-context';
 import { useTutorial } from '@/lib/tutorial/ephemeral-provider';
+import { debug } from '@/lib/utils/debug';
 
 interface AddFundsDialogProps {
   open: boolean;
@@ -24,7 +25,7 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
   
   // Debug logging for dialog state changes
   useEffect(() => {
-    console.log('[AddFundsDialog] Dialog open state changed:', { 
+    debug.log('[AddFundsDialog] Dialog open state changed:', { 
       open, 
       currentStepId: currentStep?.id,
       isAddFundsButtonStep: currentStep?.id === 'add-funds-button'
@@ -32,12 +33,12 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
     
     // Handle tutorial advancement when dialog opens
     if (open && currentStep?.id === 'add-funds-button') {
-      console.log('[AddFundsDialog] Dialog opened during add-funds-button step - advancing to select-payment-method');
+      debug.log('[AddFundsDialog] Dialog opened during add-funds-button step - advancing to select-payment-method');
       
       // Single dispatch call to avoid conflicts with provider's processing guard
       dispatch({ type: 'NEXT_STEP' });
     } else if (open) {
-      console.log('[AddFundsDialog] Dialog opened but not during tutorial add-funds-button step. Current step:', currentStep?.id);
+      debug.log('[AddFundsDialog] Dialog opened but not during tutorial add-funds-button step. Current step:', currentStep?.id);
     }
   }, [open, currentStep?.id, dispatch]);
   
@@ -56,7 +57,7 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
 
     // Advance tutorial if we're on the add-funds-dialog-opened step
     if (currentStep?.id === 'add-funds-dialog-opened') {
-      console.log('[AddFundsDialog] Deposit completed during tutorial - advancing step');
+      debug.log('[AddFundsDialog] Deposit completed during tutorial - advancing step');
       setTimeout(() => {
         dispatch({ type: 'NEXT_STEP' });
       }, 300);
@@ -71,11 +72,11 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
   };
 
   const handleDialogChange = (newOpen: boolean) => {
-    console.log('[AddFundsDialog] handleDialogChange called. Open:', newOpen, 'Current step:', currentStep?.id);
+    debug.log('[AddFundsDialog] handleDialogChange called. Open:', newOpen, 'Current step:', currentStep?.id);
 
     // For preventing dialog closure during tutorial
     if (!newOpen && (currentStep?.id === 'add-funds-button' || currentStep?.id === 'select-payment-method' || currentStep?.id === 'add-funds-dialog-opened')) {
-      console.log(`[AddFundsDialog] Attempted to close Add Funds dialog during tutorial step ${currentStep.id}. Preventing.`);
+      debug.log(`[AddFundsDialog] Attempted to close Add Funds dialog during tutorial step ${currentStep.id}. Preventing.`);
       return;
     }
     
@@ -84,7 +85,7 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
   };
 
   const handlePaymentMethodSelect = (method: 'card' | 'bank' | 'usdc' | null) => {
-    console.log('[AddFundsDialog] handlePaymentMethodSelect called:', { 
+    debug.log('[AddFundsDialog] handlePaymentMethodSelect called:', { 
       method, 
       currentStepId: currentStep?.id, 
       isSelectPaymentMethodStep: currentStep?.id === 'select-payment-method' 
@@ -94,12 +95,12 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
     
     // Advance tutorial if we're on the select-payment-method step and a method was selected
     if (currentStep?.id === 'select-payment-method' && method !== null) {
-      console.log('[AddFundsDialog] Payment method selected during tutorial - advancing to add-funds-dialog-opened');
+      debug.log('[AddFundsDialog] Payment method selected during tutorial - advancing to add-funds-dialog-opened');
       
       // Single dispatch call to avoid conflicts with provider's processing guard
         dispatch({ type: 'NEXT_STEP' });
     } else if (method !== null) {
-      console.log('[AddFundsDialog] Payment method selected but not during tutorial step. Current step:', currentStep?.id);
+      debug.log('[AddFundsDialog] Payment method selected but not during tutorial step. Current step:', currentStep?.id);
     }
   };
 
@@ -117,7 +118,7 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
           const currentStepId = currentStep?.id;
           if (currentStepId === 'add-funds-button' || currentStepId === 'select-payment-method' || currentStepId === 'add-funds-dialog-opened') {
             e.preventDefault();
-            console.log(`[AddFundsDialog] Preventing dialog close on outside click during ${currentStepId}`);
+            debug.log(`[AddFundsDialog] Preventing dialog close on outside click during ${currentStepId}`);
           }
         }}
         onEscapeKeyDown={(e) => {
@@ -125,7 +126,7 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
           const currentStepId = currentStep?.id;
           if (currentStepId === 'add-funds-button' || currentStepId === 'select-payment-method' || currentStepId === 'add-funds-dialog-opened') {
             e.preventDefault();
-            console.log(`[AddFundsDialog] Preventing dialog close on escape key during ${currentStepId}`);
+            debug.log(`[AddFundsDialog] Preventing dialog close on escape key during ${currentStepId}`);
           }
         }}
       >

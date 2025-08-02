@@ -103,12 +103,20 @@
   --z-base: 1;                    /* Base site content */
   --z-tutorial-backdrop: 1000;    /* No-click tutorial overlay */
   --z-dialogs: 2000;              /* All dialogs and modals */
+  --z-tutorial-interactive: 2500; /* Interactive tutorial elements */
   --z-tutorial-prompts: 3000;     /* Tutorial prompts and highlights - highest layer */
   
   /* Tutorial colors */
   --tutorial-overlay-color: rgba(0, 0, 0, 0.75);
   --tutorial-highlight-color: rgba(242, 180, 24, 0.2);
   --tutorial-border-color: var(--primary);
+  
+  /* Tutorial glow properties */
+  /* Removed old glow variables - now using direct values in enhanced glow */
+  
+  /* Mobile swipe enhancements */
+  --mobile-menu-width: 320px;
+  --swipe-resistance: 0.3;
 }
 
 .dark {
@@ -352,22 +360,162 @@
   user-select: auto !important;
 }
 
-/* Animations */
+/* Enhanced tutorial glow using layered box-shadows for rich glow effect */
+.tutorial-enhanced-glow {
+  box-shadow: 
+    /* Inner solid border */
+    0 0 0 3px #f2b418,
+    /* Outer glow layers for depth */
+    0 0 20px rgba(242, 180, 24, 0.6),
+    0 0 40px rgba(242, 180, 24, 0.4),
+    0 0 60px rgba(242, 180, 24, 0.2),
+    /* Inset glow for inner warmth */
+    inset 0 0 20px rgba(242, 180, 24, 0.15) !important;
+  /* No forced border-radius - inherit natural element styling */
+  transition: box-shadow 0.3s ease-in-out !important;
+  /* Add subtle animation */
+  animation: tutorial-enhanced-pulse 2s ease-in-out infinite;
+}
+
+/* Special handling for coin cards - match their natural rounded-top styling */
+.coin-card.tutorial-enhanced-glow {
+  border-radius: 0.5rem 0.5rem 0 0 !important; /* rounded-t-lg to match inner div */
+  overflow: visible !important; /* Allow glow to extend outside */
+}
+
+/* Animation for enhanced glow pulsing */
+@keyframes tutorial-enhanced-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 3px #f2b418,
+      0 0 20px rgba(242, 180, 24, 0.6),
+      0 0 40px rgba(242, 180, 24, 0.4),
+      0 0 60px rgba(242, 180, 24, 0.2),
+      inset 0 0 20px rgba(242, 180, 24, 0.15);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 3px #f2b418,
+      0 0 30px rgba(242, 180, 24, 0.8),
+      0 0 60px rgba(242, 180, 24, 0.6),
+      0 0 90px rgba(242, 180, 24, 0.3),
+      inset 0 0 30px rgba(242, 180, 24, 0.25);
+  }
+}
+
+/* Mobile menu swipe enhancements */
+.mobile-menu-enhanced {
+  /* Smooth hardware acceleration */
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform;
+}
+
+/* Enhanced overlay styling for mobile menu */
+[data-slot="sheet"] [data-radix-dialog-overlay] {
+  backdrop-filter: blur(4px) !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  transition: all 0.3s ease-out !important;
+}
+
+/* Mobile menu closing animation */
+.mobile-menu-closing {
+  animation: slideOutLeft 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Overlay fade animation when menu is closing */
+[data-slot="sheet"]:has(.mobile-menu-closing) [data-radix-dialog-overlay] {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0.8;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+}
+
+/* Custom scrollbar for mobile menu */
+.mobile-menu-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(242, 180, 24, 0.3) transparent;
+}
+
+.mobile-menu-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-menu-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-menu-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(242, 180, 24, 0.3);
+  border-radius: 2px;
+}
+
+.mobile-menu-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(242, 180, 24, 0.5);
+}
+
+/* Swipe indicator animations */
+@keyframes swipe-hint {
+  0%, 100% { opacity: 0.3; transform: translateX(0); }
+  50% { opacity: 0.7; transform: translateX(4px); }
+}
+
+.swipe-indicator {
+  animation: swipe-hint 2s ease-in-out infinite;
+}
+
+/* Mobile touch optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Improve touch targets on mobile */
+  .mobile-nav-link {
+    min-height: 48px;
+    padding: 12px 16px;
+  }
+  
+  /* Reduce animation duration for better mobile feel */
+  .mobile-menu-transition {
+    transition-duration: 0.25s !important;
+  }
+  
+  /* Optimize scrolling performance */
+  .mobile-menu-content {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
+/* Animations - Separated positioning from visual effects */
 @keyframes tutorial-pulse {
   0% { 
     border-color: var(--tutorial-border-color);
     box-shadow: 0 0 10px rgba(242, 180, 24, 0.3);
-    transform: scale(1);
   }
   50% { 
     border-color: var(--tutorial-border-color);
     box-shadow: 0 0 20px rgba(242, 180, 24, 0.6);
-    transform: scale(1.02);
   }
   100% { 
     border-color: var(--tutorial-border-color);
     box-shadow: 0 0 10px rgba(242, 180, 24, 0.3);
-    transform: scale(1);
   }
 }
 
@@ -375,17 +523,14 @@
   0% { 
     border-color: var(--tutorial-border-color);
     box-shadow: 0 0 15px rgba(242, 180, 24, 0.4);
-    transform: scale(1);
   }
   50% { 
     border-color: #fbbf24;
     box-shadow: 0 0 30px rgba(242, 180, 24, 0.8);
-    transform: scale(1.05);
   }
   100% { 
     border-color: var(--tutorial-border-color);
     box-shadow: 0 0 15px rgba(242, 180, 24, 0.4);
-    transform: scale(1);
   }
 }
 
@@ -522,7 +667,28 @@ body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] 
     z-index: calc(var(--z-mobile-menu) - 1) !important;
   }
   
-  /* Special handling for tutorial highlighting within mobile sheet */
+  /* Ensure mobile portfolio widget doesn't get covered by sheet overlays */
+@media (max-width: 1023px) {
+  [data-tutorial-id="mobile-portfolio-widget"] {
+    position: relative;
+    z-index: 45; /* Below sheet (z-50) but above normal content */
+    pointer-events: auto !important;
+  }
+  
+  /* Ensure sheet overlays are properly hidden when sheet is closed */
+  [data-slot="sheet-overlay"][data-state="closed"] {
+    display: none !important;
+    pointer-events: none !important;
+  }
+  
+  /* Ensure sheet content is properly hidden when sheet is closed */
+  [data-slot="sheet-content"][data-state="closed"] {
+    display: none !important;
+    pointer-events: none !important;
+  }
+}
+
+/* Special handling for tutorial highlighting within mobile sheet */
   [data-slot="sheet-content"] [data-tutorial-id="mobile-marketplace-link"],
   [data-slot="sheet-content"] [data-tutorial-id="mobile-portfolio-link"] {
     position: relative !important;
@@ -561,10 +727,7 @@ body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] 
     min-height: 44px;
   }
   
-  /* Better spacing for mobile cards */
-  .coin-card {
-    border-radius: 8px !important;
-  }
+  /* Removed global coin-card border-radius override - let cards use their natural styling */
   
   /* Ensure adequate touch targets in header */
   .header-mobile-action {

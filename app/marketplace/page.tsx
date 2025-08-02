@@ -61,11 +61,6 @@ export default function MarketplacePage() {
                       console.log('Mobile portfolio widget clicked, navigating to portfolio');
                       router.push('/portfolio');
                     }}
-                    style={{ 
-                      // Ensure proper positioning for tutorial highlighting
-                      position: 'relative',
-                      zIndex: 1 
-                    }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">

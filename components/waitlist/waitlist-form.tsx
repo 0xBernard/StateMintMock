@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState } from 'react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ export function WaitlistForm() {
   const [capitalRange, setCapitalRange] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const ranges = userType === 'collector' ? capitalRanges : dealerCapitalRanges;
 
@@ -26,13 +28,24 @@ export function WaitlistForm() {
     event.preventDefault();
     setIsLoading(true);
 
+    if (!executeRecaptcha) {
+      toast({
+        title: 'Uh oh! Something went wrong.',
+        description: 'reCAPTCHA not loaded. Please try again.',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      const token = await executeRecaptcha('waitlist_submission');
       const response = await fetch('/api/waitlist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, userType, capitalRange }),
+        body: JSON.stringify({ name, email, userType, capitalRange, token }),
       });
 
       if (!response.ok) {

@@ -3,14 +3,14 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "./tutorial.css";
 import "./tutorial-enhanced.css";
-import { AuthProvider } from "@/lib/context/auth-context";
-import { MarketProvider } from '@/lib/context/market-context';
-import { FinancialProvider } from '@/lib/context/financial-context';
 import { AddFundsProvider } from '@/lib/context/add-funds-context';
-import { ClientTutorialWrapper } from '@/components/tutorial/client-tutorial-wrapper';
-import { AddFundsDialogWrapper } from '@/components/shared/add-funds-dialog-wrapper';
+import { AuthProvider } from '@/lib/context/auth-context';
+import { FinancialProvider } from '@/lib/context/financial-context';
+import { MarketProvider } from '@/lib/context/market-context';
+import { ClientTutorialWrapper } from '@/components/tutorial';
 import { Toaster } from 'sonner';
 import { Toaster as RadixToaster } from '@/components/ui/toaster';
+import { RecaptchaProvider } from '@/components/shared/recaptcha-provider';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,20 +33,21 @@ export default function RootLayout({
         <link rel="icon" href="/images/33759.png" sizes="any" type="image/png" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
-        <AuthProvider>
-          <FinancialProvider>
-            <MarketProvider>
-              <AddFundsProvider>
-                <ClientTutorialWrapper mode={tutorialMode}>
-                  {children}
-                  <AddFundsDialogWrapper />
-                  <Toaster />
-                  <RadixToaster />
-                </ClientTutorialWrapper>
-              </AddFundsProvider>
-            </MarketProvider>
-          </FinancialProvider>
-        </AuthProvider>
+        <RecaptchaProvider>
+          <AuthProvider>
+            <FinancialProvider>
+              <MarketProvider>
+                <AddFundsProvider>
+                  <ClientTutorialWrapper mode={tutorialMode}>
+                    {children}
+                    <Toaster />
+                    <RadixToaster />
+                  </ClientTutorialWrapper>
+                </AddFundsProvider>
+              </MarketProvider>
+            </FinancialProvider>
+          </AuthProvider>
+        </RecaptchaProvider>
       </body>
     </html>
   );

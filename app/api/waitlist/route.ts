@@ -4,10 +4,20 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, userType, capitalRange } = await req.json();
+    const { name, email, userType, capitalRange, token } = await req.json();
 
-    if (!name || !email || !userType || !capitalRange) {
+    if (!name || !email || !userType || !capitalRange || !token) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    const verificationUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`;
+
+    const recaptchaResponse = await fetch(verificationUrl, { method: 'POST' });
+    const recaptchaData = await recaptchaResponse.json();
+
+    if (!recaptchaData.success || recaptchaData.score < 0.5) {
+      return NextResponse.json({ error: 'reCAPTCHA verification failed' }, { status: 403 });
     }
 
     const auth = new google.auth.GoogleAuth({

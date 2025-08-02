@@ -8,7 +8,10 @@ import { Button } from '@/components/ui/button';
 import { CoinData } from '@/lib/data/coins';
 import { calculateMarketMetrics, formatSharePrice, formatPriceChange } from '@/lib/data/market';
 
-type CoinCardProps = CoinData;
+type CoinCardProps = CoinData & {
+  priority?: boolean; // For above-the-fold loading
+  index?: number;     // For determining loading priority
+};
 
 export function CoinCard({
   id,
@@ -20,6 +23,8 @@ export function CoinCard({
   soldShares,
   owners,
   rarity,
+  priority = false,
+  index = 0,
 }: CoinCardProps) {
   const router = useRouter();
   const soldPercentage = (soldShares / totalShares) * 100;
@@ -47,10 +52,22 @@ export function CoinCard({
       <div className="relative aspect-[2/1] bg-black rounded-t-lg overflow-hidden">
         <Image
           src={image}
-          alt={name}
+          alt={`${name} collectible coin`}
           fill
-          className="object-cover"
+          className="object-cover transition-opacity duration-300"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={priority || index < 4} // Prioritize first 4 images
+          loading={priority || index < 4 ? 'eager' : 'lazy'}
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyatNeaSmCGGmclSCtjfJeciVgI6iqOYdvdKyMIpwGFLKOYoJEMLhN/fgA1A8jqCrLhcOwrGKE8nVFSM8nQHHNiNj/eH9uVGqjCeFLpLZGAGGFcU1Xzyl4MXJqM8IhFgPsE/wOJjWZDd3KdKyMTNvQvE2adKLGKE8nVHPnXL2aVg5K1C8T2sKdWbvqnmTaZEUgVNJlnlJKnkrUJbMfccfaYo4/8VAP1Qz8wm9jHdAHxj6zU"
+          onLoad={(e) => {
+            // Fade in effect after load
+            e.currentTarget.style.opacity = '1';
+          }}
+          onError={(e) => {
+            // Fallback for broken images
+            e.currentTarget.src = '/images/coin-placeholder.jpg';
+          }}
         />
         <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold uppercase ${rarityColors[rarity]}`}>
           {rarity}

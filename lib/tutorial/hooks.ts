@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import { TutorialContextValue, ElementTrackingState } from './types';
-import { EphemeralZIndexManager } from './z-index-manager';
+import { ZIndexManager } from './z-index-manager';
 
 // Utility function to generate session IDs
 export function generateSessionId(): string {
@@ -29,13 +29,13 @@ export const useZIndexOverride = (
   zIndex: number,
   enabled: boolean
 ) => {
-  const managerRef = useRef<EphemeralZIndexManager | undefined>(undefined)
+  const managerRef = useRef<ZIndexManager | undefined>(undefined)
   
   useEffect(() => {
     if (!enabled || !selector) return
     
     if (!managerRef.current) {
-      managerRef.current = new EphemeralZIndexManager()
+      managerRef.current = new ZIndexManager()
     }
     
     managerRef.current.apply(selector, zIndex)
@@ -53,8 +53,193 @@ export const useZIndexOverride = (
   }, [])
 }
 
+// Performance monitoring for tutorial system improvements
+class TutorialPerformanceMonitor {
+  private static instance: TutorialPerformanceMonitor
+  private metrics = {
+    domQueries: 0,
+    renderCount: 0,
+    observerCount: 0,
+    startTime: Date.now()
+  }
+
+  static getInstance(): TutorialPerformanceMonitor {
+    if (!TutorialPerformanceMonitor.instance) {
+      TutorialPerformanceMonitor.instance = new TutorialPerformanceMonitor()
+    }
+    return TutorialPerformanceMonitor.instance
+  }
+
+  trackDOMQuery() {
+    this.metrics.domQueries++
+  }
+
+  trackRender() {
+    this.metrics.renderCount++
+  }
+
+  trackObserver(action: 'add' | 'remove') {
+    this.metrics.observerCount += action === 'add' ? 1 : -1
+  }
+
+  getMetrics() {
+    const runtime = Date.now() - this.metrics.startTime
+    return {
+      ...this.metrics,
+      runtime,
+      domQueriesPerSecond: (this.metrics.domQueries / runtime) * 1000,
+      rendersPerSecond: (this.metrics.renderCount / runtime) * 1000
+    }
+  }
+
+  logMetrics() {
+    const metrics = this.getMetrics()
+    console.group('🚀 Tutorial Performance Metrics')
+    console.log(`📊 DOM Queries: ${metrics.domQueries} (${metrics.domQueriesPerSecond.toFixed(2)}/sec)`)
+    console.log(`🎨 React Renders: ${metrics.renderCount} (${metrics.rendersPerSecond.toFixed(2)}/sec)`)
+    console.log(`👀 Active Observers: ${metrics.observerCount}`)
+    console.log(`⏱️ Runtime: ${(metrics.runtime / 1000).toFixed(2)}s`)
+    console.groupEnd()
+  }
+
+  reset() {
+    this.metrics = {
+      domQueries: 0,
+      renderCount: 0,
+      observerCount: 0,
+      startTime: Date.now()
+    }
+  }
+}
+
+// Shared observer instances to reduce total observers across the app
+class SharedElementTracker {
+  private static instance: SharedElementTracker
+  private intersectionObserver: IntersectionObserver
+  private resizeObserver: ResizeObserver
+  private mutationObserver: MutationObserver
+  private trackedElements = new Map<Element, Set<string>>()
+  private callbacks = new Map<string, (bounds: DOMRect | null, isVisible: boolean) => void>()
+  private frameId: number | undefined
+
+  private constructor() {
+    const monitor = TutorialPerformanceMonitor.getInstance()
+    
+    // Single intersection observer for all elements
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          monitor.trackDOMQuery() // Track getBoundingClientRect call
+          const selectors = this.trackedElements.get(entry.target)
+          if (selectors) {
+            const bounds = entry.isIntersecting ? entry.target.getBoundingClientRect() : null
+            selectors.forEach(selector => {
+              this.callbacks.get(selector)?.(bounds, entry.isIntersecting)
+            })
+          }
+        })
+      },
+      { rootMargin: '200px', threshold: [0, 0.1, 1.0] }
+    )
+    monitor.trackObserver('add')
+
+    // Single resize observer for all elements  
+    this.resizeObserver = new ResizeObserver(
+      throttle((entries) => {
+        if (this.frameId) cancelAnimationFrame(this.frameId)
+        this.frameId = requestAnimationFrame(() => {
+          entries.forEach(entry => {
+            monitor.trackDOMQuery() // Track getBoundingClientRect call
+            const selectors = this.trackedElements.get(entry.target)
+            if (selectors) {
+              const bounds = entry.target.getBoundingClientRect()
+              selectors.forEach(selector => {
+                this.callbacks.get(selector)?.(bounds, true)
+              })
+            }
+          })
+        })
+      }, 16) // ~60fps max
+    )
+    monitor.trackObserver('add')
+
+    // Single mutation observer for DOM changes
+    this.mutationObserver = new MutationObserver(
+      throttle(() => this.recheckElements(), 100)
+    )
+    monitor.trackObserver('add')
+    
+    this.mutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: false
+    })
+  }
+
+  static getInstance(): SharedElementTracker {
+    if (!SharedElementTracker.instance) {
+      SharedElementTracker.instance = new SharedElementTracker()
+    }
+    return SharedElementTracker.instance
+  }
+
+  track(selector: string, callback: (bounds: DOMRect | null, isVisible: boolean) => void) {
+    this.callbacks.set(selector, callback)
+    this.updateElementTracking(selector)
+  }
+
+  untrack(selector: string) {
+    this.callbacks.delete(selector)
+    
+    // Find and remove from tracked elements
+    this.trackedElements.forEach((selectors, element) => {
+      if (selectors.has(selector)) {
+        selectors.delete(selector)
+        if (selectors.size === 0) {
+          this.intersectionObserver.unobserve(element)
+          this.resizeObserver.unobserve(element)
+          this.trackedElements.delete(element)
+        }
+      }
+    })
+  }
+
+  private updateElementTracking(selector: string) {
+    const monitor = TutorialPerformanceMonitor.getInstance()
+    monitor.trackDOMQuery() // Track querySelector call
+    
+    const element = document.querySelector(selector)
+    
+    if (element) {
+      let selectors = this.trackedElements.get(element)
+      if (!selectors) {
+        selectors = new Set()
+        this.trackedElements.set(element, selectors)
+        this.intersectionObserver.observe(element)
+        this.resizeObserver.observe(element)
+      }
+      selectors.add(selector)
+      
+      // Immediate bounds check for tab content and hidden elements
+      monitor.trackDOMQuery() // Track getBoundingClientRect call
+      const bounds = element.getBoundingClientRect()
+      const hasVisibleBounds = bounds.width > 0 && bounds.height > 0
+      this.callbacks.get(selector)?.(hasVisibleBounds ? bounds : null, hasVisibleBounds)
+    } else {
+      // Element not found, notify callback
+      this.callbacks.get(selector)?.(null, false)
+    }
+  }
+
+  private recheckElements() {
+    this.callbacks.forEach((_, selector) => {
+      this.updateElementTracking(selector)
+    })
+  }
+}
+
 /**
- * Optimized element tracking with Intersection Observer
+ * Highly optimized element tracking with shared observers
  */
 export const useElementTracking = (selector: string, options: {
   rootMargin?: string
@@ -68,137 +253,35 @@ export const useElementTracking = (selector: string, options: {
   })
   
   useEffect(() => {
-    // Guard against empty or invalid selectors
     if (!selector || selector.trim() === '') {
       return
     }
+
+    const tracker = SharedElementTracker.getInstance()
+    const monitor = TutorialPerformanceMonitor.getInstance()
     
-    let currentElement: Element | null = null
-    let frameId: number | undefined
-    let observer: IntersectionObserver | null = null
-    let resizeObserver: ResizeObserver | null = null
-    let mutationObserver: MutationObserver | null = null
-    
-    const updateBounds = () => {
-      if (frameId !== undefined) cancelAnimationFrame(frameId)
-      
-      frameId = requestAnimationFrame(() => {
-        if (currentElement) {
-        setState(prev => ({
-          ...prev,
-            bounds: currentElement!.getBoundingClientRect()
-        }))
-        }
+    const handleUpdate = (bounds: DOMRect | null, isVisible: boolean) => {
+      monitor.trackRender() // Track React state update
+      setState({
+        isVisible,
+        bounds,
+        intersection: null // Simplified - we don't need full intersection data
       })
     }
-    
-    const setupObservers = (element: Element) => {
-      currentElement = element
-    
-    // Intersection Observer for visibility
-      observer = new IntersectionObserver(
-      ([entry]) => {
-        setState(prev => ({
-          ...prev,
-          isVisible: entry.isIntersecting,
-          intersection: entry
-        }))
-        
-        // Only track bounds when visible
-        if (entry.isIntersecting) {
-          updateBounds()
-        }
-      },
-      {
-        rootMargin: options.rootMargin || '50px',
-        threshold: options.threshold || 0
-      }
-    )
-    
-    observer.observe(element)
-    
-    // Resize Observer with debouncing
-    let resizeTimeout: NodeJS.Timeout
-      resizeObserver = new ResizeObserver(() => {
-      if (!state.isVisible) return
-      
-      clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(updateBounds, options.debounceMs || 100)
-    })
-    
-    resizeObserver.observe(element)
-      
-      // Initial bounds update
-      updateBounds()
-    }
-    
-    const cleanupObservers = () => {
-      if (observer) {
-        observer.disconnect()
-        observer = null
-      }
-      if (resizeObserver) {
-        resizeObserver.disconnect()
-        resizeObserver = null
-      }
-      if (frameId !== undefined) {
-        cancelAnimationFrame(frameId)
-        frameId = undefined
-      }
-      currentElement = null
-    }
-    
-    const checkForElement = () => {
-      const element = document.querySelector(selector)
-      
-      if (element && element !== currentElement) {
-        console.log('[ElementTracking] Found new element for selector:', selector)
-        cleanupObservers()
-        setupObservers(element)
-      } else if (!element && currentElement) {
-        console.log('[ElementTracking] Element disappeared for selector:', selector)
-        cleanupObservers()
-        setState({
-          isVisible: false,
-          bounds: null,
-          intersection: null
-        })
-      }
-    }
-    
-    // Initial check
-    checkForElement()
-    
-    // Set up mutation observer to watch for DOM changes
-    mutationObserver = new MutationObserver(() => {
-      checkForElement()
-    })
-    
-    // Watch for changes in the entire document
-    mutationObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: false
-    })
-    
-    // Scroll listener: when the element is visible, update bounds on scroll for accurate highlight positioning
-    const handleScroll = () => {
-      if (!state.isVisible || !currentElement) return;
-      updateBounds();
-    };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    tracker.track(selector, handleUpdate)
     
     return () => {
-      cleanupObservers()
-      if (mutationObserver) {
-        mutationObserver.disconnect()
-      }
-      window.removeEventListener('scroll', handleScroll)
+      tracker.untrack(selector)
     }
-  }, [selector, options.rootMargin, options.threshold, options.debounceMs])
+  }, [selector])
   
   return state
+}
+
+// Export performance monitor for debugging
+export const useTutorialPerformanceMonitor = () => {
+  return TutorialPerformanceMonitor.getInstance()
 }
 
 /**

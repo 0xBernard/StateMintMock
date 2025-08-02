@@ -3,7 +3,7 @@
  */
 
 /**
- * Safely formats a number to a string with the specified number of decimal places
+ * Safely formats a number to a string with the specified number of decimal places and thousand separators
  */
 export function formatNumber(value: number | string | undefined | null, decimals: number = 2): string {
   // Convert string to number if needed
@@ -11,18 +11,35 @@ export function formatNumber(value: number | string | undefined | null, decimals
   
   // Handle invalid values
   if (typeof num !== 'number' || isNaN(num)) {
-    return '0.00';
+    return decimals === 0 ? '0' : '0.00';
   }
 
-  // Format with fixed decimals
-  return num.toFixed(decimals);
+  // Use Intl.NumberFormat for proper number formatting with commas
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(num);
 }
 
 /**
- * Safely formats a number as currency
+ * Safely formats a number as currency with proper thousand separators
  */
 export function formatCurrency(value: number | string | undefined | null): string {
-  return `$${formatNumber(value)}`;
+  // Convert string to number if needed
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  
+  // Handle invalid values
+  if (typeof num !== 'number' || isNaN(num)) {
+    return '$0.00';
+  }
+
+  // Use Intl.NumberFormat for proper currency formatting with commas
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
 }
 
 /**
@@ -39,6 +56,69 @@ export function safeMultiply(a: number | string | undefined | null, b: number | 
  */
 export function formatPercentage(value: number | string | undefined | null, decimals: number = 1): string {
   return `${formatNumber(value, decimals)}%`;
+}
+
+/**
+ * Formats a number with commas but no currency symbol (useful for share counts, etc.)
+ */
+export function formatNumberWithCommas(value: number | string | undefined | null): string {
+  // Convert string to number if needed
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  
+  // Handle invalid values
+  if (typeof num !== 'number' || isNaN(num)) {
+    return '0';
+  }
+
+  // Use Intl.NumberFormat for comma formatting without decimals
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+}
+
+/**
+ * Parse a string that may contain commas and return a number
+ */
+export function parseNumberWithCommas(value: string): number {
+  if (!value || typeof value !== 'string') return NaN;
+  // Remove commas and parse
+  const cleanValue = value.replace(/,/g, '');
+  return parseFloat(cleanValue);
+}
+
+/**
+ * Format a number input value with commas as the user types
+ */
+export function formatNumberInput(value: string): string {
+  if (!value) return '';
+  
+  // Remove all non-digit, non-decimal, non-comma characters
+  let cleaned = value.replace(/[^\d.,]/g, '');
+  
+  // Remove commas temporarily for processing
+  cleaned = cleaned.replace(/,/g, '');
+  
+  // Handle multiple decimal points - keep only the first one
+  const decimalIndex = cleaned.indexOf('.');
+  if (decimalIndex !== -1) {
+    cleaned = cleaned.slice(0, decimalIndex + 1) + cleaned.slice(decimalIndex + 1).replace(/\./g, '');
+  }
+  
+  // Split into integer and decimal parts
+  const parts = cleaned.split('.');
+  const integerPart = parts[0];
+  const decimalPart = parts[1];
+  
+  // Add commas to integer part
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  
+  // Combine parts
+  if (decimalPart !== undefined) {
+    return formattedInteger + '.' + decimalPart;
+  } else {
+    return formattedInteger;
+  }
 }
 
 /**

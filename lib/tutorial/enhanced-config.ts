@@ -162,7 +162,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     id: 'portfolio-navigation',
     title: "Visit Your Portfolio",
     content: "Perfect! You're now logged in. Let's check out your portfolio. Click on 'My Portfolio' in the sidebar.",
-    targetElementSelector: '[data-tutorial-id="portfolio-link"]',
+    targetElementSelector: '[data-tutorial-id="sidebar-portfolio-link"]',
     mobileTargetSelector: '[data-tutorial-id="mobile-portfolio-widget"]',
     mobileContent: "Perfect! You're now logged in. Let's check out your portfolio. Tap on your portfolio card below to view your investments.",
     promptPlacement: 'right',
@@ -176,7 +176,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     waitForElement: true,
     zIndexOverrides: [
       {
-        selector: '[data-tutorial-id="portfolio-link"]',
+        selector: '[data-tutorial-id="sidebar-portfolio-link"]',
         zIndex: 3002, // Above tutorial prompts (3001) to ensure it's highlighted properly
         createStackingContext: true
       },
@@ -196,7 +196,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       await new Promise(resolve => setTimeout(resolve, 500));
       return new Promise<void>(resolve => {
         const checkElement = () => {
-          const portfolioLink = document.querySelector('[data-tutorial-id="portfolio-link"]');
+          const portfolioLink = document.querySelector('[data-tutorial-id="sidebar-portfolio-link"]');
           const mobilePortfolioWidget = document.querySelector('[data-tutorial-id="mobile-portfolio-widget"]');
           
           if (portfolioLink || mobilePortfolioWidget) {
@@ -309,7 +309,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
         createStackingContext: true
       }
     ],
-    // No action - let the user click the button naturally
+    action: {
+      type: 'click',
+      selector: '[data-tutorial-id="add-funds-button"]',
+      mobileSelector: '[data-tutorial-id="mobile-add-funds-button"]',
+      autoAdvance: true,
+      preventBubbling: false,
+    },
     onBeforeStep: async () => {
       console.log('[Tutorial Config] add-funds-button: onBeforeStep - waiting for button to be ready.');
       await new Promise(resolve => setTimeout(resolve, 500));

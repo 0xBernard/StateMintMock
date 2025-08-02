@@ -1,13 +1,9 @@
 /* Tutorial Mode Styles */
-:root {
-  --tutorial-backdrop-color: rgba(0, 0, 0, 0.75);
-  --tutorial-highlight-color: rgba(242, 180, 24, 0.3);
-  --tutorial-border-color: rgb(242, 180, 24);
-}
+/* Color and z-index variables moved to globals.css for consistency */
 
-/* Tutorial Login Dialog - needs to be above everything */
+/* Tutorial Login Dialog - needs to be above dialogs but below tutorial prompts */
 .tutorial-login-dialog {
-  z-index: 2005 !important;
+  z-index: var(--z-tutorial-interactive) !important;
   position: fixed !important;
   pointer-events: auto !important;
 }

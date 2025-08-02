@@ -9,6 +9,7 @@ import { useFinancial } from '@/lib/context/financial-context';
 import { useAddFunds } from '@/lib/context/add-funds-context';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { debug } from '@/lib/utils/debug';
 
 type MenuItem = {
   name: string;
@@ -97,7 +98,7 @@ export function Sidebar() {
                   onClick={(e) => handleNavClick(e, item.enabled)}
                   data-tutorial-id={
                     item.name === 'My Portfolio' 
-                      ? 'portfolio-link' 
+                      ? 'sidebar-portfolio-link' 
                       : item.name === 'Marketplace'
                         ? 'marketplace-link'
                         : undefined
@@ -134,7 +135,7 @@ export function Sidebar() {
             <Button 
               className="w-full bg-amber-600 hover:bg-amber-500 text-black font-semibold"
               onClick={() => {
-                console.log('[Sidebar] Add Funds button clicked');
+                debug.log('[Sidebar] Add Funds button clicked');
                 openAddFundsDialog();
               }}
               data-tutorial-id="add-funds-button"

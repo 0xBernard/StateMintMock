@@ -1,11 +1,7 @@
 /* Enhanced Tutorial Mode Styles */
+/* Z-index and color variables moved to globals.css for consistency */
 :root {
-  --tutorial-backdrop-color: rgba(0, 0, 0, 0.75);
-  --tutorial-highlight-color: rgba(242, 180, 24, 0.3);
   --tutorial-border-color: rgb(242, 180, 24);
-  --tutorial-overlay-z: 3001;
-  --tutorial-prompt-z: 3002;
-  --tutorial-interactive-z: 3002;
 }
 
 /* Tutorial layer animations */
@@ -30,22 +26,22 @@
 /* Tutorial prompt container positioning */
 .tutorial-prompt-container {
   position: fixed !important;
-  z-index: var(--tutorial-prompt-z) !important;
+  z-index: var(--z-tutorial-prompts) !important;
   pointer-events: auto;
 }
 
 /* Tutorial highlight positioning */
 .tutorial-highlight {
   position: fixed !important;
-  z-index: var(--tutorial-overlay-z) !important;
+  z-index: var(--z-tutorial-prompts) !important;
   pointer-events: none;
 }
 
 /* Tutorial backdrop positioning */
 .tutorial-backdrop {
   position: fixed !important;
-  background: var(--tutorial-backdrop-color);
-  z-index: calc(var(--tutorial-overlay-z) - 1) !important;
+  background: var(--tutorial-overlay-color);
+  z-index: var(--z-tutorial-backdrop) !important;
   pointer-events: auto;
 }
 
@@ -56,28 +52,13 @@
   left: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: var(--tutorial-backdrop-color) !important;
-  z-index: calc(var(--tutorial-overlay-z) - 1) !important;
+  background: var(--tutorial-overlay-color) !important;
+  z-index: var(--z-tutorial-backdrop) !important;
   pointer-events: auto !important;
 }
 
-/* Golden border highlight animation */
-.tutorial-highlight-border {
-  pointer-events: none !important;
-}
-
-@keyframes tutorial-highlight-pulse {
-  0%, 100% {
-    opacity: 0.8;
-    transform: scale(1);
-    box-shadow: 0 0 20px rgba(242, 180, 24, 0.5), inset 0 0 20px rgba(242, 180, 24, 0.1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.01);
-    box-shadow: 0 0 30px rgba(242, 180, 24, 0.7), inset 0 0 30px rgba(242, 180, 24, 0.2);
-  }
-}
+/* Removed old tutorial-highlight-border and tutorial-highlight-pulse keyframes 
+   as they're no longer used with the enhanced glow system */
 
 /* Highlight pulse animation for blocked interactions */
 .tutorial-highlight-pulse {
@@ -97,18 +78,18 @@
 }
 
 @keyframes tutorial-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
 }
 
 @keyframes tutorial-ring-pulse {
   0% { 
     opacity: 1; 
-    transform: scale(1);
+    box-shadow: 0 0 10px rgba(242, 180, 24, 0.6);
   }
   100% { 
     opacity: 0; 
-    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(242, 180, 24, 0.8);
   }
 }
 
@@ -117,6 +98,8 @@
   position: relative;
   animation: tutorialPulse 2s infinite;
 }
+
+/* Removed old tutorial-highlight-glow class as it's no longer used with the enhanced glow system */
 
 .tutorial-spotlight-target {
   box-shadow: 0 0 0 4px var(--tutorial-border-color),

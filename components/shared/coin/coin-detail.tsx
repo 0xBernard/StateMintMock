@@ -14,10 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CoinData } from '@/lib/data/coins';
 import { cn } from '@/lib/utils';
+import { debug } from '@/lib/utils/debug';
+import { useExpensiveComputation } from '@/lib/utils/computation-optimizer';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, Users, History, AlertTriangle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { calculatePurchaseBreakdown } from '@/lib/data/market';
-import { formatNumber, formatCurrency, safeMultiply, formatPercentage } from '@/lib/utils/number-formatting';
+import { formatNumber, formatCurrency, safeMultiply, formatPercentage, parseNumberWithCommas, formatNumberInput } from '@/lib/utils/number-formatting';
 
 interface CoinDetailProps {
   coin: CoinData;
@@ -59,39 +61,47 @@ export function CoinDetail({ coin }: CoinDetailProps) {
     }
   }, [state.isActive, currentStep?.id]);
 
-  // Calculate purchase breakdown when buying
-  const purchaseBreakdown = React.useMemo(() => {
-    if (tradeType !== 'buy' || !shares || isNaN(parseInt(shares))) {
-      console.log('Purchase breakdown skipped due to invalid inputs:', { tradeType, shares });
-      return null;
+  // Optimized purchase breakdown calculation
+  const { result: purchaseBreakdown, isComputing: isCalculating } = useExpensiveComputation(
+    () => {
+      if (tradeType !== 'buy' || !shares || isNaN(parseNumberWithCommas(shares))) {
+        debug.log('Purchase breakdown skipped due to invalid inputs:', { tradeType, shares });
+        return null;
+      }
+      
+      const parsedShares = Math.floor(parseNumberWithCommas(shares));
+      
+      // Check if there are any available shares
+      if (!availableShares || availableShares.length === 0) {
+        debug.log('No available shares for purchase breakdown');
+        return null;
+      }
+      
+      // Filter out user's own listings from available shares
+      const purchasableShares = availableShares.filter(share => !share.isUserListing);
+      
+      if (purchasableShares.length === 0) {
+        debug.log('No purchasable shares (all are user listings)');
+        return null;
+      }
+      
+      debug.log('Calculating purchase breakdown:', { 
+        availableShares: JSON.stringify(purchasableShares), 
+        parsedShares,
+        availableSharesLength: purchasableShares.length 
+      });
+      
+      const result = calculatePurchaseBreakdown(purchasableShares, parsedShares);
+      debug.log('Purchase breakdown calculation result:', JSON.stringify(result, null, 2));
+      return result;
+    },
+    [tradeType, shares, availableShares],
+    {
+      debounceMs: 250, // Wait 250ms before recalculating
+      maxAge: 30000,   // Cache for 30 seconds
+      enableProfiling: process.env.NODE_ENV === 'development'
     }
-    
-    const parsedShares = parseInt(shares);
-    
-    // Check if there are any available shares
-    if (!availableShares || availableShares.length === 0) {
-      console.log('No available shares for purchase breakdown');
-      return null;
-    }
-    
-    // Filter out user's own listings from available shares
-    const purchasableShares = availableShares.filter(share => !share.isUserListing);
-    
-    if (purchasableShares.length === 0) {
-      console.log('No purchasable shares (all are user listings)');
-      return null;
-    }
-    
-    console.log('Calculating purchase breakdown:', { 
-      availableShares: JSON.stringify(purchasableShares), 
-      parsedShares,
-      availableSharesLength: purchasableShares.length 
-    });
-    
-    const result = calculatePurchaseBreakdown(purchasableShares, parsedShares);
-    console.log('Purchase breakdown calculation result:', JSON.stringify(result, null, 2));
-    return result;
-  }, [tradeType, shares, availableShares]);
+  );
 
   // Format market price display - use lowest available price if available
   const formattedMarketPrice = React.useMemo(() => {
@@ -109,16 +119,16 @@ export function CoinDetail({ coin }: CoinDetailProps) {
 
   // Render purchase breakdown
   const renderPurchaseBreakdown = () => {
-    console.log('Rendering purchase breakdown, received:', JSON.stringify(purchaseBreakdown, null, 2));
+    debug.log('Rendering purchase breakdown, received:', JSON.stringify(purchaseBreakdown, null, 2));
     
     // Early return if no purchase breakdown or invalid structure
     if (!purchaseBreakdown) {
-      console.log('No purchase breakdown available');
+      debug.log('No purchase breakdown available');
       return null;
     }
 
     if (!Array.isArray(purchaseBreakdown.breakdown)) {
-      console.error('Invalid breakdown array:', purchaseBreakdown);
+      debug.error('Invalid breakdown array:', purchaseBreakdown);
       return (
         <div className="text-sm text-red-500 p-3 bg-destructive/10 rounded-lg">
           Unable to calculate purchase breakdown. Please try a different quantity.
@@ -132,7 +142,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
         .filter(item => item && typeof item === 'object')
         .map((item, index) => {
           // Log the actual item for debugging
-          console.log(`Processing breakdown item ${index}:`, JSON.stringify(item));
+          debug.log(`Processing breakdown item ${index}:`, JSON.stringify(item));
           
           return {
             quantity: typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0,
@@ -142,7 +152,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
         });
 
       if (safeBreakdown.length === 0) {
-        console.error('No valid breakdown items after sanitization');
+        debug.error('No valid breakdown items after sanitization');
         return (
           <div className="text-sm text-red-500 p-3 bg-destructive/10 rounded-lg">
             Unable to process purchase breakdown. Please try again.
@@ -157,7 +167,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       const tradingFee = safeMultiply(safeTotalCost, 0.005);
       const total = safeMultiply(safeTotalCost, 1.005);
 
-      console.log('Final safe values for rendering:', {
+      debug.log('Final safe values for rendering:', {
         safeBreakdown,
         safeTotalCost,
         safeAveragePrice,
@@ -195,7 +205,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
         </div>
       );
     } catch (error) {
-      console.error('Error rendering purchase breakdown:', error);
+      debug.error('Error rendering purchase breakdown:', error);
       return (
         <div className="text-sm text-red-500 p-3 bg-destructive/10 rounded-lg">
           Error displaying purchase breakdown. Please try again with a different quantity.
@@ -208,8 +218,8 @@ export function CoinDetail({ coin }: CoinDetailProps) {
   const renderSellBreakdown = () => {
     if (!shares || !listingPrice) return null;
 
-    const numShares = parseFloat(shares);
-    const numPrice = parseFloat(listingPrice);
+    const numShares = parseNumberWithCommas(shares);
+    const numPrice = parseNumberWithCommas(listingPrice);
 
     if (isNaN(numShares) || isNaN(numPrice)) return null;
 
@@ -237,7 +247,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
 
   // Validate share quantity
   const validateShares = (value: string): string | null => {
-    const numShares = parseInt(value);
+    const numShares = parseNumberWithCommas(value);
     if (isNaN(numShares)) return "Please enter a valid number";
     if (numShares <= 0) return "Quantity must be greater than 0";
     if (numShares % 1 !== 0) return "Only whole shares are allowed";
@@ -247,7 +257,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
 
   // Validate listing price
   const validateListingPrice = (price: string): string | null => {
-    const numPrice = parseFloat(price);
+    const numPrice = parseNumberWithCommas(price);
     if (isNaN(numPrice)) return "Please enter a valid price";
     if (numPrice <= 0) return "Price must be greater than 0";
     return null;
@@ -255,18 +265,16 @@ export function CoinDetail({ coin }: CoinDetailProps) {
 
   // Handle share input change
   const handleSharesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const error = validateShares(value);
-    if (!error || !value) {
-      setShares(value);
-    }
+    const rawValue = e.target.value;
+    const formattedValue = formatNumberInput(rawValue);
+    setShares(formattedValue);
   };
 
   // Handle future sell price change
   const handleFutureSellPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Allow empty value and typing
-    setFutureSellPrice(value);
+    const rawValue = e.target.value;
+    const formattedValue = formatNumberInput(rawValue);
+    setFutureSellPrice(formattedValue);
   };
 
   // Format price on blur
@@ -276,13 +284,13 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       setFutureSellPrice('');
       return;
     }
-    // Only format if there are decimals
-    const numValue = parseFloat(value);
+    // Parse the number and format with proper decimals
+    const numValue = parseNumberWithCommas(value);
     if (!isNaN(numValue)) {
       if (value.includes('.')) {
-        setFutureSellPrice(numValue.toFixed(2));
+        setFutureSellPrice(formatNumberInput(numValue.toFixed(2)));
       } else {
-        setFutureSellPrice(value);
+        setFutureSellPrice(formatNumberInput(value));
       }
     }
   };
@@ -296,7 +304,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       // Check if there are enough shares available (excluding user's own listings)
       const purchasableShares = availableShares.filter(share => !share.isUserListing);
       const totalAvailableShares = purchasableShares.reduce((sum, listing) => sum + listing.quantity, 0);
-      const requestedShares = parseInt(shares);
+      const requestedShares = Math.floor(parseNumberWithCommas(shares));
       
       if (requestedShares > totalAvailableShares) {
         toast({
@@ -340,7 +348,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
         coin.id,
         requestedShares,
         purchase.averagePrice, // Use the actual purchase price from the executed trade
-        futureSellPrice ? parseFloat(futureSellPrice) : null
+        futureSellPrice ? parseNumberWithCommas(futureSellPrice) : null
       );
 
       // Add the purchase transaction
@@ -352,8 +360,8 @@ export function CoinDetail({ coin }: CoinDetailProps) {
 
       // If user wants to list these shares after purchase
       if (futureSellPrice) {
-        const numPrice = parseFloat(futureSellPrice);
-        const sharesToList = parseInt(shares);
+        const numPrice = parseNumberWithCommas(futureSellPrice);
+        const sharesToList = Math.floor(parseNumberWithCommas(shares));
         
         // Check if the user will have enough shares to list after this purchase
         const currentShares = userHolding?.shares || 0;
@@ -398,8 +406,8 @@ export function CoinDetail({ coin }: CoinDetailProps) {
         return;
       }
 
-      const numShares = parseInt(shares);
-      const numPrice = parseFloat(listingPrice);
+      const numShares = Math.floor(parseNumberWithCommas(shares));
+      const numPrice = parseNumberWithCommas(listingPrice);
 
       if (numShares > sharesOwned) {
         toast({
@@ -438,7 +446,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
 
   // Handle editing a user listing
   const handleEditListing = (oldPrice: number, newPrice: string) => {
-    const numNewPrice = parseFloat(newPrice);
+    const numNewPrice = parseNumberWithCommas(newPrice);
     if (isNaN(numNewPrice) || numNewPrice <= 0) {
       toast({
         variant: "destructive",
@@ -684,9 +692,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
                   <Label htmlFor="shares">Number of Shares</Label>
                   <Input
                     id="shares"
-                    type="number"
-                    min="1"
-                    step="1"
+                    type="text"
                     value={shares}
                     onChange={handleSharesChange}
                     disabled={!user}
@@ -749,19 +755,23 @@ export function CoinDetail({ coin }: CoinDetailProps) {
                         inputMode="decimal"
                         className="pl-7"
                         value={listingPrice}
-                        onChange={(e) => setListingPrice(e.target.value)}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const formattedValue = formatNumberInput(rawValue);
+                          setListingPrice(formattedValue);
+                        }}
                         onBlur={(e) => {
                           const value = e.target.value;
                           if (!value) {
                             setListingPrice('');
                             return;
                           }
-                          const numValue = parseFloat(value);
+                          const numValue = parseNumberWithCommas(value);
                           if (!isNaN(numValue)) {
                             if (value.includes('.')) {
-                              setListingPrice(numValue.toFixed(2));
+                              setListingPrice(formatNumberInput(numValue.toFixed(2)));
                             } else {
-                              setListingPrice(value);
+                              setListingPrice(formatNumberInput(value));
                             }
                           }
                         }}
