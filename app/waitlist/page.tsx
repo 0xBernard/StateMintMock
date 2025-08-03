@@ -1,5 +1,7 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { WaitlistForm } from '@/components/waitlist/waitlist-form';
+import { Button } from '@/components/ui/button';
 
 export default function WaitlistPage() {
   return (
@@ -17,6 +19,18 @@ export default function WaitlistPage() {
       <div className="absolute top-1/2 left-1/4 w-20 h-20 bg-amber-300/10 rounded-full blur-lg animate-pulse hidden lg:block" />
 
       <div className="relative z-10 container mx-auto px-4 py-8 md:py-16">
+        {/* Back to Homepage */}
+        <div className="absolute top-4 left-4 md:top-8 md:left-8">
+          <Link href="/">
+            <Button 
+              variant="ghost" 
+              className="text-white/70 hover:text-white hover:bg-white/10 border border-white/20 hover:border-white/40"
+            >
+              ← Back to Home
+            </Button>
+          </Link>
+        </div>
+
         <div className="min-h-screen flex flex-col justify-center">
           <div className="w-full max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">

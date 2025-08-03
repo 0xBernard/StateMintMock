@@ -224,7 +224,11 @@ class SharedElementTracker {
       monitor.trackDOMQuery() // Track getBoundingClientRect call
       const bounds = element.getBoundingClientRect()
       const hasVisibleBounds = bounds.width > 0 && bounds.height > 0
-      this.callbacks.get(selector)?.(hasVisibleBounds ? bounds : null, hasVisibleBounds)
+      
+      // For elements that exist but are hidden, we should still track them
+      // and provide the bounds even if they're currently hidden - the tutorial
+      // system can decide how to handle this case
+      this.callbacks.get(selector)?.(bounds, hasVisibleBounds)
     } else {
       // Element not found, notify callback
       this.callbacks.get(selector)?.(null, false)

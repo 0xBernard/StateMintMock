@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CoinData } from '@/lib/data/coins';
 import { cn } from '@/lib/utils';
 import { debug } from '@/lib/utils/debug';
-import { useExpensiveComputation } from '@/lib/utils/computation-optimizer';
+
 import { ArrowUpRight, ArrowDownRight, TrendingUp, Users, History, AlertTriangle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { calculatePurchaseBreakdown } from '@/lib/data/market';
@@ -61,47 +61,35 @@ export function CoinDetail({ coin }: CoinDetailProps) {
     }
   }, [state.isActive, currentStep?.id]);
 
-  // Optimized purchase breakdown calculation
-  const { result: purchaseBreakdown, isComputing: isCalculating } = useExpensiveComputation(
-    () => {
-      if (tradeType !== 'buy' || !shares || isNaN(parseNumberWithCommas(shares))) {
-        debug.log('Purchase breakdown skipped due to invalid inputs:', { tradeType, shares });
-        return null;
-      }
-      
-      const parsedShares = Math.floor(parseNumberWithCommas(shares));
-      
-      // Check if there are any available shares
-      if (!availableShares || availableShares.length === 0) {
-        debug.log('No available shares for purchase breakdown');
-        return null;
-      }
-      
-      // Filter out user's own listings from available shares
-      const purchasableShares = availableShares.filter(share => !share.isUserListing);
-      
-      if (purchasableShares.length === 0) {
-        debug.log('No purchasable shares (all are user listings)');
-        return null;
-      }
-      
-      debug.log('Calculating purchase breakdown:', { 
-        availableShares: JSON.stringify(purchasableShares), 
-        parsedShares,
-        availableSharesLength: purchasableShares.length 
-      });
-      
-      const result = calculatePurchaseBreakdown(purchasableShares, parsedShares);
-      debug.log('Purchase breakdown calculation result:', JSON.stringify(result, null, 2));
-      return result;
-    },
-    [tradeType, shares, availableShares],
-    {
-      debounceMs: 250, // Wait 250ms before recalculating
-      maxAge: 30000,   // Cache for 30 seconds
-      enableProfiling: process.env.NODE_ENV === 'development'
+  // Purchase breakdown calculation
+  const purchaseBreakdown = React.useMemo(() => {
+    if (tradeType !== 'buy' || !shares || isNaN(parseNumberWithCommas(shares))) {
+      debug.log('Purchase breakdown skipped due to invalid inputs:', { tradeType, shares });
+      return null;
     }
-  );
+    
+    const parsedShares = Math.floor(parseNumberWithCommas(shares));
+    
+    // Check if there are any available shares
+    if (!availableShares || availableShares.length === 0) {
+      debug.log('No available shares for purchase breakdown');
+      return null;
+    }
+    
+    // Filter out user's own listings from available shares
+    const purchasableShares = availableShares.filter(share => !share.isUserListing);
+    
+    if (purchasableShares.length === 0) {
+      debug.log('No purchasable shares (all are user listings)');
+      return null;
+    }
+    
+    debug.log('Calculating purchase breakdown:', { parsedShares, availableSharesLength: purchasableShares.length });
+    
+    const result = calculatePurchaseBreakdown(purchasableShares, parsedShares);
+    debug.log('Purchase breakdown calculation result:', JSON.stringify(result, null, 2));
+    return result;
+  }, [tradeType, shares, availableShares]);
 
   // Format market price display - use lowest available price if available
   const formattedMarketPrice = React.useMemo(() => {
@@ -720,7 +708,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
                       <Input
                         id="futureSellPrice"
                         type="text"
-                        pattern="^\d*\.?\d{0,2}$"
+                        pattern="^[\d,]*\.?\d{0,2}$"
                         inputMode="decimal"
                         className="pl-7"
                         value={futureSellPrice}
@@ -751,7 +739,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
                       <Input
                         id="price"
                         type="text"
-                        pattern="^\d*\.?\d{0,2}$"
+                        pattern="^[\d,]*\.?\d{0,2}$"
                         inputMode="decimal"
                         className="pl-7"
                         value={listingPrice}

@@ -74,8 +74,19 @@ const TutorialOverlay: React.FC<{
   if (!isVisible && target) return null;
 
   // For spotlight, use SVG mask approach with interaction blocking
-  if (type === 'spotlight' && actualBounds) {
-    debug.log('[TutorialOverlay] Rendering spotlight for', target, { actualBounds });
+  // Show spotlight even if element has zero bounds (like hidden tab content)
+  if (type === 'spotlight' && actualBounds && target) {
+    const hasValidBounds = actualBounds.width > 0 && actualBounds.height > 0;
+    debug.log('[TutorialOverlay] Rendering spotlight for', target, { actualBounds, hasValidBounds });
+    
+    // If element has no visible bounds, create a small spotlight at the element's position
+    // This helps with tab content that's initially hidden
+    const spotlightBounds = hasValidBounds ? actualBounds : {
+      x: actualBounds.x || 0,
+      y: actualBounds.y || 0,
+      width: Math.max(actualBounds.width, 100), // Minimum size for hidden elements
+      height: Math.max(actualBounds.height, 50)
+    };
     
     return (
       <>
@@ -90,10 +101,10 @@ const TutorialOverlay: React.FC<{
               <mask id={`spotlight-mask-${target?.replace(/[^a-zA-Z0-9]/g, '')}`}>
                 <rect width="100%" height="100%" fill="white" />
                 <rect
-                  x={actualBounds.x - spotlightPadding}
-                  y={actualBounds.y - spotlightPadding}
-                  width={actualBounds.width + spotlightPadding * 2}
-                  height={actualBounds.height + spotlightPadding * 2}
+                  x={spotlightBounds.x - spotlightPadding}
+                  y={spotlightBounds.y - spotlightPadding}
+                  width={spotlightBounds.width + spotlightPadding * 2}
+                  height={spotlightBounds.height + spotlightPadding * 2}
                   rx={4}
                   fill="black"
                 />
@@ -116,7 +127,7 @@ const TutorialOverlay: React.FC<{
             top: 0,
             left: 0,
             right: 0,
-            height: actualBounds.y - spotlightPadding,
+            height: spotlightBounds.y - spotlightPadding,
             zIndex: 'var(--z-tutorial-backdrop)',
             pointerEvents: 'auto',
             background: 'transparent'
@@ -129,7 +140,7 @@ const TutorialOverlay: React.FC<{
         <div
           style={{
             position: 'fixed',
-            top: actualBounds.y + actualBounds.height + spotlightPadding,
+            top: spotlightBounds.y + spotlightBounds.height + spotlightPadding,
             left: 0,
             right: 0,
             bottom: 0,
@@ -145,10 +156,10 @@ const TutorialOverlay: React.FC<{
         <div
           style={{
             position: 'fixed',
-            top: actualBounds.y - spotlightPadding,
+            top: spotlightBounds.y - spotlightPadding,
             left: 0,
-            width: actualBounds.x - spotlightPadding,
-            height: actualBounds.height + spotlightPadding * 2,
+            width: spotlightBounds.x - spotlightPadding,
+            height: spotlightBounds.height + spotlightPadding * 2,
             zIndex: 'var(--z-tutorial-backdrop)',
             pointerEvents: 'auto',
             background: 'transparent'
@@ -161,10 +172,10 @@ const TutorialOverlay: React.FC<{
         <div
           style={{
             position: 'fixed',
-            top: actualBounds.y - spotlightPadding,
-            left: actualBounds.x + actualBounds.width + spotlightPadding,
+            top: spotlightBounds.y - spotlightPadding,
+            left: spotlightBounds.x + spotlightBounds.width + spotlightPadding,
             right: 0,
-            height: actualBounds.height + spotlightPadding * 2,
+            height: spotlightBounds.height + spotlightPadding * 2,
             zIndex: 'var(--z-tutorial-backdrop)',
             pointerEvents: 'auto',
             background: 'transparent'
@@ -205,11 +216,11 @@ const TutorialHighlight: React.FC<{
   // Apply enhanced glow effect to the target element itself (for coin cards)
   // This MUST be called before any conditional returns to avoid Hooks order violation
   useEffect(() => {
-    if (!target || !bounds) return;
+    if (!target) return;
     
     const targetElement = document.querySelector(target);
     if (targetElement) {
-      // Apply enhanced glow class
+      // Apply enhanced glow class even if bounds are zero (hidden elements)
       targetElement.classList.add('tutorial-enhanced-glow');
       
       return () => {
@@ -221,6 +232,7 @@ const TutorialHighlight: React.FC<{
 
   // Don't render if element doesn't exist (bounds will be null if element not found)
   // This check happens AFTER all hooks are called
+  // Note: We now allow bounds with zero dimensions for hidden elements
   if (!bounds) {
     return null;
   }
@@ -528,6 +540,29 @@ export const TutorialLayer: React.FC<TutorialLayerProps> = ({
       }
     };
   }, [step.id, step.onBeforeShow, step.onAfterShow]);
+
+  // Handle step actions (like delay auto-advance)
+  useEffect(() => {
+    if (!step.action) return;
+
+    const { action } = step;
+    
+    if (action.type === 'delay' && action.autoAdvance && action.delayMs) {
+      debug.log(`[Tutorial Layer] Setting up delay action: ${action.delayMs}ms`);
+      
+      const timeoutId = setTimeout(() => {
+        debug.log('[Tutorial Layer] Delay completed - auto-advancing step');
+        onNext();
+      }, action.delayMs);
+
+      return () => {
+        debug.log('[Tutorial Layer] Cleaning up delay timeout');
+        clearTimeout(timeoutId);
+      };
+    }
+    
+    // TODO: Add handling for other action types (click, input, etc.) here as needed
+  }, [step.id, step.action, onNext]);
 
   // Determine overlay type
   const overlayType = step.overlayType || 

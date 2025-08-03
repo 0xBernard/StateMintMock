@@ -77,6 +77,28 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Additional Links */}
+        <div className="mt-6 sm:mt-8 space-y-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => router.push('/waitlist')}
+              className="text-white border border-white/20 hover:bg-white/10 hover:border-white/40 w-full sm:w-auto"
+            >
+              Join Waitlist
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => window.open('/pitch-deck.pdf', '_blank')}
+              className="text-amber-400 border border-amber-400/20 hover:bg-amber-400/10 hover:border-amber-400/40 w-full sm:w-auto"
+            >
+              View Pitch Deck
+            </Button>
+          </div>
+        </div>
+
         {/* Seed Round */}
         <div className="mt-6 sm:mt-8 lg:mt-12">
           <p className="text-white/70 text-base sm:text-xl tracking-wide">

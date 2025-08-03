@@ -19,8 +19,8 @@ interface SwipeCallbacks {
   onSwipeEnd?: () => void;
 }
 
-export function useSwipeGestures(
-  elementRef: React.RefObject<HTMLElement>,
+export function useSwipeGestures<T extends HTMLElement>(
+  elementRef: React.RefObject<T | null>,
   callbacks: SwipeCallbacks,
   config: SwipeConfig = {}
 ) {

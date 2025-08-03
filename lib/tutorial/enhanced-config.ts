@@ -222,7 +222,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     mobileContent: "Your portfolio shows your coin investments. Click Next to continue.",
     targetElementSelector: '[data-tutorial-id="portfolio-coin-list-section"]',
     promptPlacement: 'top',
-    mobilePromptPlacement: 'bottom',
+    mobilePromptPlacement: 'top', // Changed from 'bottom' to 'top' to avoid being hidden behind content
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: true,
@@ -234,6 +234,11 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       {
         selector: '[data-tutorial-id="portfolio-coin-list-section"]',
         zIndex: 3002, // Above tutorial prompts (3001) to ensure it's highlighted properly
+        createStackingContext: false
+      },
+      {
+        selector: '.tutorial-prompt', // Ensure tutorial prompt is above everything on mobile
+        zIndex: 3500, // Higher than normal prompts for this step
         createStackingContext: false
       }
     ],
@@ -497,7 +502,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'coin-detail-overview',
     title: "Coin Details Page",
-    content: "Perfect! This is the coin detail page. Here you can analyze the investment opportunity. Let's start by examining the Order Book.",
+    content: "This is the coin detail page. Here you can analyze the investment opportunity. Let's start by examining the Order Book.",
     targetElementSelector: '[data-tutorial-id="order-book-content-area"]',
     promptPlacement: 'right',
     mobilePromptPlacement: 'top',
@@ -615,12 +620,97 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     },
   },
   {
+    id: 'purchase-widget-scroll',
+    title: "",
+    content: "",
+    targetElementSelector: 'body',
+    promptPlacement: 'center',
+    isModal: false,
+    overlayType: 'transparent',
+    showNextButton: false,
+    showPreviousButton: false,
+    waitForElement: false,
+    zIndexOverrides: [
+      {
+        selector: '.tutorial-prompt',
+        zIndex: -9999, // Hide the prompt completely behind everything
+        createStackingContext: false
+      }
+    ],
+    onBeforeShow: async () => {
+      console.log('🚀 [Tutorial Config] purchase-widget-scroll: Step starting');
+      
+      const isMobile = window.innerWidth < 1024;
+      if (!isMobile) {
+        console.log('[Tutorial Config] Desktop detected - skipping scroll step immediately');
+        // On desktop, skip this step immediately by advancing to next
+        return;
+      }
+      
+      console.log('[Tutorial Config] Mobile detected - performing scroll');
+      
+      // Wait for the widget to be ready
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const buyWidget = document.querySelector('[data-tutorial-id="buy-widget-container"]');
+      if (buyWidget) {
+        console.log('[Tutorial Config] Scrolling to buy widget on mobile');
+        
+        const widgetRect = buyWidget.getBoundingClientRect();
+        const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Calculate target scroll position - widget near top with space for prompt
+        const tutorialPromptHeight = 280;
+        const additionalPadding = 20;
+        const targetScrollY = currentScrollY + widgetRect.top - tutorialPromptHeight - additionalPadding;
+        const finalScrollY = Math.max(0, targetScrollY);
+        
+        if (Math.abs(finalScrollY - currentScrollY) > 10) {
+          console.log('[Tutorial Config] Scrolling from', currentScrollY, 'to', finalScrollY);
+          window.scrollTo({
+            top: finalScrollY,
+            behavior: 'smooth'
+          });
+          await new Promise(resolve => setTimeout(resolve, 800)); // Wait for scroll to complete
+          console.log('[Tutorial Config] Scroll completed');
+        }
+      }
+    },
+    action: {
+      type: 'custom',
+      autoAdvance: true
+    },
+    onAfterShow: async () => {
+      // Auto-advance after a delay
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+      const delayMs = isMobile ? 100 : 1; // Mobile: brief delay, Desktop: immediate
+      
+      console.log(`[Tutorial Config] Auto-advancing scroll step in ${delayMs}ms`);
+      
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      
+      // Trigger next step by dispatching a click on the next button (which is hidden)
+      // This is a workaround since the delay action type isn't implemented
+      const nextButton = document.querySelector('[data-tutorial-id="prompt-next-button"]');
+      if (nextButton) {
+        console.log('[Tutorial Config] Auto-clicking hidden next button to advance');
+        (nextButton as HTMLElement).click();
+      } else {
+        console.log('[Tutorial Config] Next button not found, trying alternative method');
+        // Alternative: dispatch a NEXT_STEP event
+        const tutorialEvent = new CustomEvent('tutorial-next', { bubbles: true });
+        document.dispatchEvent(tutorialEvent);
+      }
+    }
+  },
+  {
     id: 'purchase-widget-highlight',
     title: "Invest in Shares, Not Whole Coins",
     content: "Now let's make your first investment! Use this trading widget to buy some shares. Enter the number of shares you want and optionally set a future sell price, then click the buy button.",
+    mobileContent: "Enter the number of shares you want in the field below, then tap the buy button to make your first investment!",
     targetElementSelector: '[data-tutorial-id="buy-widget-container"]',
-    promptPlacement: 'left',
-    mobilePromptPlacement: 'top',
+    promptPlacement: 'left', // Keep desktop as 'left' (original)
+    mobilePromptPlacement: 'top', // Mobile uses 'top' to attach to top of buy widget
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
@@ -634,12 +724,8 @@ export const enhancedTutorialSteps: TutorialStep[] = [
         zIndex: 10000,
         createStackingContext: true
       }
-    ],
-    // No action - let the user interact with the purchase widget naturally
-    onBeforeStep: async () => {
-      console.log('[Tutorial Config] purchase-widget-highlight: onBeforeStep - waiting for purchase widget to be ready.');
-      await new Promise(resolve => setTimeout(resolve, 500));
-    },
+    ]
+    // No onBeforeShow - just render the prompt after scroll is complete
   },
   {
     id: 'purchase-completion',
@@ -658,7 +744,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'tutorial-complete',
     title: "Welcome to the Future of Collectible Investing!",
-    content: "You've just experienced how StateMint is revolutionizing a $300B market. With fractional ownership, 75% lower fees, instant liquidity, and verified authentication, you're ready to build a portfolio of assets that have historically outperformed traditional markets. ",
+    content: "You've just experienced how StateMint is revolutionizing a $300B market. With fractional ownership, 75% lower fees, instant liquidity, and verified authentication, the future of collectibles is here. You can further explore the demo on your own, or return to the homepage to join the waitlist or download the pitch deck.",
     targetElementSelector: 'body',
     promptPlacement: 'center',
     isModal: true,

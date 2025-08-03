@@ -785,4 +785,17 @@ body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] 
     max-width: 100% !important;
     margin: 0 !important;
   }
+  
+  /* Ensure tutorial prompts are visible on mobile portfolio page */
+  [data-tutorial-step="portfolio-overview"] .tutorial-prompt {
+    z-index: 4000 !important; /* Higher than normal tutorial prompts */
+    position: fixed !important;
+  }
+  
+  /* Make sure portfolio content doesn't cover tutorial prompts on mobile */
+  @media (max-width: 1023px) {
+    [data-tutorial-step="portfolio-overview"] [data-tutorial-id="portfolio-coin-list-section"] {
+      z-index: 3002 !important; /* Below tutorial prompts */
+    }
+  }
 }
