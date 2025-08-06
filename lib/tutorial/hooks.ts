@@ -176,6 +176,12 @@ class SharedElementTracker {
       attributes: false
     })
 
+    // Enhanced mobile scroll detection with Brave browser support
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                     window.innerWidth < 1024;
+    const isBrave = !!(navigator as any).brave && !!(navigator as any).brave.isBrave;
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
     // Add scroll event handling to update positions when scrolling
     this.handleScroll = throttle(() => {
       if (this.frameId) cancelAnimationFrame(this.frameId)
@@ -193,12 +199,6 @@ class SharedElementTracker {
         })
       })
     }, isBrave && isAndroid ? 8 : 16) // More aggressive throttling for Brave on Android
-
-    // Enhanced mobile scroll detection with Brave browser support
-    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                     window.innerWidth < 1024;
-    const isBrave = !!(navigator as any).brave && !!(navigator as any).brave.isBrave;
-    const isAndroid = /Android/i.test(navigator.userAgent);
 
     // Listen to scroll events on window and scroll containers
     window.addEventListener('scroll', this.handleScroll, { passive: true })
