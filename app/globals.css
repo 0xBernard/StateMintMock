@@ -805,6 +805,11 @@ body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] 
   pointer-events: none !important;
 }
 
+/* Hide reCAPTCHA badge that blocks UI */
+.grecaptcha-badge {
+  display: none !important;
+}
+
 /* Reduce Add Funds dialog spacing on mobile during tutorial to make room for prompts */
 @media (max-width: 1023px) {
   [data-tutorial-step="select-payment-method"] [data-tutorial-id="add-funds-dialog"] .pb-2,
