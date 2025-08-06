@@ -121,6 +121,7 @@ class SharedElementTracker {
   private trackedElements = new Map<Element, Set<string>>()
   private callbacks = new Map<string, (bounds: DOMRect | null, isVisible: boolean) => void>()
   private frameId: number | undefined
+  private handleScroll: () => void
 
   private constructor() {
     const monitor = TutorialPerformanceMonitor.getInstance()
@@ -174,6 +175,28 @@ class SharedElementTracker {
       subtree: true,
       attributes: false
     })
+
+    // Add scroll event handling to update positions when scrolling
+    this.handleScroll = throttle(() => {
+      if (this.frameId) cancelAnimationFrame(this.frameId)
+      this.frameId = requestAnimationFrame(() => {
+        // Update bounds for all tracked elements when scrolling
+        this.trackedElements.forEach((selectors, element) => {
+          monitor.trackDOMQuery() // Track getBoundingClientRect call
+          const bounds = element.getBoundingClientRect()
+          const isVisible = bounds.width > 0 && bounds.height > 0 && 
+                           bounds.top < window.innerHeight && bounds.bottom > 0 &&
+                           bounds.left < window.innerWidth && bounds.right > 0
+          selectors.forEach(selector => {
+            this.callbacks.get(selector)?.(bounds, isVisible)
+          })
+        })
+      })
+    }, 16) // ~60fps max
+
+    // Listen to scroll events on window and scroll containers
+    window.addEventListener('scroll', this.handleScroll, { passive: true })
+    document.addEventListener('scroll', this.handleScroll, { passive: true })
   }
 
   static getInstance(): SharedElementTracker {
@@ -239,6 +262,21 @@ class SharedElementTracker {
     this.callbacks.forEach((_, selector) => {
       this.updateElementTracking(selector)
     })
+  }
+
+  // Clean up all observers and event listeners
+  destroy() {
+    this.intersectionObserver.disconnect()
+    this.resizeObserver.disconnect()
+    this.mutationObserver.disconnect()
+    window.removeEventListener('scroll', this.handleScroll)
+    document.removeEventListener('scroll', this.handleScroll)
+    if (this.frameId) {
+      cancelAnimationFrame(this.frameId)
+    }
+    this.trackedElements.clear()
+    this.callbacks.clear()
+    SharedElementTracker.instance = null as any
   }
 }
 

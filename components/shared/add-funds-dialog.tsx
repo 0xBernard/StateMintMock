@@ -111,7 +111,7 @@ export function AddFundsDialog({ open, onOpenChange }: AddFundsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent 
-        className="w-[90vw] max-w-md max-h-[90vh] overflow-y-auto" 
+        className="w-[75vw] max-w-sm max-h-[70vh] overflow-y-auto" 
         data-tutorial-id="add-funds-dialog"
         onPointerDownOutside={(e) => {
           // Prevent closing on outside click during tutorial

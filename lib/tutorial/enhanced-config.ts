@@ -289,13 +289,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     targetElementSelector: '[data-tutorial-id="add-funds-button"]',
     mobileTargetSelector: '[data-tutorial-id="mobile-add-funds-button"]',
     promptPlacement: 'right',
-    mobilePromptPlacement: 'bottom',
+    mobilePromptPlacement: 'bottom', // Bottom is safer on mobile - won't go offscreen
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
     showPreviousButton: false,
     spotlightPadding: 12,
-    mobileSpotlightPadding: 12,
+    mobileSpotlightPadding: 8,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -333,13 +333,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     mobileContent: "Great! Select a payment method below. Credit card is fastest for this tutorial.",
     targetElementSelector: '[data-tutorial-id="add-funds-dialog"]',
     promptPlacement: 'bottom-start',
-    mobilePromptPlacement: 'top',
+    mobilePromptPlacement: 'top', // Position above the dialog on mobile with scroll tracking
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
     showPreviousButton: false,
     spotlightPadding: 16,
-    mobileSpotlightPadding: 8,
+    mobileSpotlightPadding: 12,
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -347,7 +347,6 @@ export const enhancedTutorialSteps: TutorialStep[] = [
         zIndex: 2500, // Above backdrop (1000) and dialogs (2000), below prompts (3000)
         createStackingContext: true
       },
-
       {
         selector: '[data-slot="dialog-content"]',
         zIndex: 2500, // Above backdrop (1000) and dialogs (2000), below prompts (3000)
@@ -371,13 +370,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     mobileContent: "Perfect! Enter your deposit amount (try $1000 or tap a quick amount) and tap 'Deposit' to continue.",
     targetElementSelector: '[data-tutorial-id="add-funds-dialog"]',
     promptPlacement: 'right',
-    mobilePromptPlacement: 'top',
+    mobilePromptPlacement: 'top', // Position above the dialog on mobile with scroll tracking
     isModal: false,
     overlayType: 'spotlight',
     showNextButton: false,
     showPreviousButton: false,
     spotlightPadding: 12,
-    mobileSpotlightPadding: 8,
+    mobileSpotlightPadding: 16, // Increased for better mobile spacing
     waitForElement: true,
     zIndexOverrides: [
       {
@@ -508,6 +507,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     mobilePromptPlacement: 'top',
     isModal: false,
     overlayType: 'spotlight',
+    mobileOverlayType: 'transparent', // Remove darkening on mobile since spotlight doesn't track scroll properly
     showNextButton: true,
     showPreviousButton: false,
     spotlightPadding: 12,
@@ -619,90 +619,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       await new Promise(resolve => setTimeout(resolve, 1000));
     },
   },
-  {
-    id: 'purchase-widget-scroll',
-    title: "",
-    content: "",
-    targetElementSelector: 'body',
-    promptPlacement: 'center',
-    isModal: false,
-    overlayType: 'transparent',
-    showNextButton: false,
-    showPreviousButton: false,
-    waitForElement: false,
-    zIndexOverrides: [
-      {
-        selector: '.tutorial-prompt',
-        zIndex: -9999, // Hide the prompt completely behind everything
-        createStackingContext: false
-      }
-    ],
-    onBeforeShow: async () => {
-      console.log('🚀 [Tutorial Config] purchase-widget-scroll: Step starting');
-      
-      const isMobile = window.innerWidth < 1024;
-      if (!isMobile) {
-        console.log('[Tutorial Config] Desktop detected - skipping scroll step immediately');
-        // On desktop, skip this step immediately by advancing to next
-        return;
-      }
-      
-      console.log('[Tutorial Config] Mobile detected - performing scroll');
-      
-      // Wait for the widget to be ready
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const buyWidget = document.querySelector('[data-tutorial-id="buy-widget-container"]');
-      if (buyWidget) {
-        console.log('[Tutorial Config] Scrolling to buy widget on mobile');
-        
-        const widgetRect = buyWidget.getBoundingClientRect();
-        const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
-        
-        // Calculate target scroll position - widget near top with space for prompt
-        const tutorialPromptHeight = 280;
-        const additionalPadding = 20;
-        const targetScrollY = currentScrollY + widgetRect.top - tutorialPromptHeight - additionalPadding;
-        const finalScrollY = Math.max(0, targetScrollY);
-        
-        if (Math.abs(finalScrollY - currentScrollY) > 10) {
-          console.log('[Tutorial Config] Scrolling from', currentScrollY, 'to', finalScrollY);
-          window.scrollTo({
-            top: finalScrollY,
-            behavior: 'smooth'
-          });
-          await new Promise(resolve => setTimeout(resolve, 800)); // Wait for scroll to complete
-          console.log('[Tutorial Config] Scroll completed');
-        }
-      }
-    },
-    action: {
-      type: 'custom',
-      autoAdvance: true
-    },
-    onAfterShow: async () => {
-      // Auto-advance after a delay
-      const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-      const delayMs = isMobile ? 100 : 1; // Mobile: brief delay, Desktop: immediate
-      
-      console.log(`[Tutorial Config] Auto-advancing scroll step in ${delayMs}ms`);
-      
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-      
-      // Trigger next step by dispatching a click on the next button (which is hidden)
-      // This is a workaround since the delay action type isn't implemented
-      const nextButton = document.querySelector('[data-tutorial-id="prompt-next-button"]');
-      if (nextButton) {
-        console.log('[Tutorial Config] Auto-clicking hidden next button to advance');
-        (nextButton as HTMLElement).click();
-      } else {
-        console.log('[Tutorial Config] Next button not found, trying alternative method');
-        // Alternative: dispatch a NEXT_STEP event
-        const tutorialEvent = new CustomEvent('tutorial-next', { bubbles: true });
-        document.dispatchEvent(tutorialEvent);
-      }
-    }
-  },
+
   {
     id: 'purchase-widget-highlight',
     title: "Invest in Shares, Not Whole Coins",
@@ -724,8 +641,27 @@ export const enhancedTutorialSteps: TutorialStep[] = [
         zIndex: 10000,
         createStackingContext: true
       }
-    ]
-    // No onBeforeShow - just render the prompt after scroll is complete
+    ],
+    onBeforeStep: async () => {
+      console.log('[Tutorial Config] purchase-widget-highlight: onBeforeStep - ensuring widget is visible on mobile');
+      
+      // On mobile, ensure the buy widget is scrolled into view
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        const buyWidget = document.querySelector('[data-tutorial-id="buy-widget-container"]');
+        if (buyWidget) {
+          console.log('[Tutorial Config] Scrolling buy widget into view on mobile');
+          buyWidget.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+          await new Promise(resolve => setTimeout(resolve, 800)); // Wait for scroll
+        }
+      }
+    }
   },
   {
     id: 'purchase-completion',

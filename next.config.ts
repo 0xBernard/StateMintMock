@@ -104,8 +104,7 @@ const nextConfig: NextConfig = {
     return config;
   },
 
-  // Compiler optimizations
-  swcMinify: true,
+  // Compiler optimizations (swcMinify is default in Next.js 15+)
   
   // Static optimization
   output: 'standalone',

@@ -564,10 +564,12 @@ export const TutorialLayer: React.FC<TutorialLayerProps> = ({
     // TODO: Add handling for other action types (click, input, etc.) here as needed
   }, [step.id, step.action, onNext]);
 
-  // Determine overlay type
-  const overlayType = step.overlayType || 
+  // Determine overlay type with mobile override support
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const overlayType = (isMobile && step.mobileOverlayType) ? step.mobileOverlayType :
+    (step.overlayType || 
     (step.useTransparentOverlay ? 'transparent' : 
-     (step.targetElementSelector !== 'body' ? 'spotlight' : 'dark'));
+     (step.targetElementSelector !== 'body' ? 'spotlight' : 'dark')));
 
   return (
     <div className={`tutorial-layer ${isVisible && !isTransitioning ? 'visible' : ''}`}>

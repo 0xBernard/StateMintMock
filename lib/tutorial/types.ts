@@ -30,6 +30,7 @@ export interface TutorialStep {
   mobileContent?: string | ReactNode;
   mobileSpotlightPadding?: number;
   mobileTargetSelector?: string;
+  mobileOverlayType?: 'dark' | 'transparent' | 'spotlight';
   
   // Z-index management
   zIndexOverrides?: ZIndexOverride[];
