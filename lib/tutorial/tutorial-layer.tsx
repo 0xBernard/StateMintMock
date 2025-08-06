@@ -275,6 +275,10 @@ const TutorialPrompt: React.FC<{
   // Use enhanced bounds from the optimized tracking hook
   const actualBounds = bounds;
   
+  // Force recalculation on mobile devices when bounds change
+  const isMobileDevice = typeof window !== 'undefined' && 
+    (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 1024);
+  
   // Calculate prompt position
   const promptStyle = useMemo(() => {
     if (step.isModal || !actualBounds) {
@@ -387,15 +391,39 @@ const TutorialPrompt: React.FC<{
       transform = transform.replace(/,\s*-?\d+%/, ', 0');
     }
 
+    // Mobile-specific positioning fix for scroll momentum issues
+    const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isBrave = typeof window !== 'undefined' && !!(navigator as any).brave && !!(navigator as any).brave.isBrave;
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    
     return {
       position: 'fixed' as const,
       top,
       left,
       transform,
       zIndex: 'var(--z-tutorial-prompts)',
-      pointerEvents: 'auto' as const
+      pointerEvents: 'auto' as const,
+      // Add mobile-specific CSS properties to ensure proper positioning
+      ...(isMobileDevice && {
+        willChange: 'transform, top, left',
+        backfaceVisibility: 'hidden' as const,
+        perspective: 1000,
+        // Force hardware acceleration on mobile
+        WebkitTransform: transform,
+        WebkitBackfaceVisibility: 'hidden' as const,
+        // Android/Brave specific optimizations
+        ...(isAndroid || isBrave) && {
+          // Brave browser on Android needs these for smooth positioning
+          WebkitOverflowScrolling: 'touch' as const,
+          contain: 'layout style paint' as const,
+          // Improve rendering performance on Android
+          imageRendering: 'crisp-edges' as const,
+          // Fix for Android Chrome scroll lag
+          overscrollBehavior: 'contain' as const
+        }
+      })
     };
-  }, [actualBounds, step.isModal, step.promptPlacement, step.mobilePromptPlacement, bounds]);
+  }, [actualBounds, step.isModal, step.promptPlacement, step.mobilePromptPlacement, bounds, isMobileDevice]);
 
   return (
     <div 

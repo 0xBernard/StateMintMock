@@ -192,11 +192,41 @@ class SharedElementTracker {
           })
         })
       })
-    }, 16) // ~60fps max
+    }, isBrave && isAndroid ? 8 : 16) // More aggressive throttling for Brave on Android
+
+    // Enhanced mobile scroll detection with Brave browser support
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                     window.innerWidth < 1024;
+    const isBrave = !!(navigator as any).brave && !!(navigator as any).brave.isBrave;
+    const isAndroid = /Android/i.test(navigator.userAgent);
 
     // Listen to scroll events on window and scroll containers
     window.addEventListener('scroll', this.handleScroll, { passive: true })
     document.addEventListener('scroll', this.handleScroll, { passive: true })
+    
+    // For mobile devices, also listen to touchmove and orientation changes
+    if (isMobile) {
+      window.addEventListener('touchmove', this.handleScroll, { passive: true })
+      window.addEventListener('orientationchange', () => {
+        // Delay to allow orientation change to complete
+        setTimeout(this.handleScroll, 150)
+      })
+      // iOS momentum scrolling events
+      window.addEventListener('gesturestart', this.handleScroll, { passive: true })
+      window.addEventListener('gesturechange', this.handleScroll, { passive: true })
+      window.addEventListener('gestureend', this.handleScroll, { passive: true })
+      
+      // Android/Brave specific optimizations
+      if (isAndroid || isBrave) {
+        // Brave browser on Android has issues with scroll momentum
+        window.addEventListener('touchstart', this.handleScroll, { passive: true })
+        window.addEventListener('touchend', this.handleScroll, { passive: true })
+        // Android Chrome and Brave need these for proper scroll tracking
+        document.addEventListener('touchmove', this.handleScroll, { passive: true })
+        document.addEventListener('touchstart', this.handleScroll, { passive: true })
+        document.addEventListener('touchend', this.handleScroll, { passive: true })
+      }
+    }
   }
 
   static getInstance(): SharedElementTracker {
@@ -271,6 +301,29 @@ class SharedElementTracker {
     this.mutationObserver.disconnect()
     window.removeEventListener('scroll', this.handleScroll)
     document.removeEventListener('scroll', this.handleScroll)
+    
+    // Remove mobile-specific event listeners
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                     window.innerWidth < 1024;
+    const isBrave = !!(navigator as any).brave && !!(navigator as any).brave.isBrave;
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      window.removeEventListener('touchmove', this.handleScroll)
+      window.removeEventListener('gesturestart', this.handleScroll)
+      window.removeEventListener('gesturechange', this.handleScroll)
+      window.removeEventListener('gestureend', this.handleScroll)
+      
+      // Remove Android/Brave specific listeners
+      if (isAndroid || isBrave) {
+        window.removeEventListener('touchstart', this.handleScroll)
+        window.removeEventListener('touchend', this.handleScroll)
+        document.removeEventListener('touchmove', this.handleScroll)
+        document.removeEventListener('touchstart', this.handleScroll)
+        document.removeEventListener('touchend', this.handleScroll)
+      }
+    }
+    
     if (this.frameId) {
       cancelAnimationFrame(this.frameId)
     }

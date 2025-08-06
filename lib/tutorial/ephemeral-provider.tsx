@@ -83,19 +83,40 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
       isActive: autoStart // Only auto-start after hydration
     }));
 
-    // Use async import to load TutorialLayer after hydration
-    const loadTutorialLayer = async () => {
-      try {
-        // @ts-ignore - Dynamic import works at runtime despite TypeScript linter warning
-        const { TutorialLayer: LayerComponent } = await import('./tutorial-layer');
-        setTutorialLayer(() => LayerComponent);
-      } catch (error) {
-        debug.error('Failed to load TutorialLayer:', error);
-      }
-    };
+    // Only load TutorialLayer when tutorial becomes active (lazy loading)
+    if (autoStart) {
+      const loadTutorialLayer = async () => {
+        try {
+          // Add delay to prevent blocking initial render
+          await new Promise(resolve => setTimeout(resolve, 100));
+          // @ts-ignore - Dynamic import works at runtime despite TypeScript linter warning
+          const { TutorialLayer: LayerComponent } = await import('./tutorial-layer');
+          setTutorialLayer(() => LayerComponent);
+        } catch (error) {
+          debug.error('Failed to load TutorialLayer:', error);
+        }
+      };
 
-    loadTutorialLayer();
+      loadTutorialLayer();
+    }
   }, [autoStart]);
+
+  // Load tutorial layer when tutorial becomes active
+  useEffect(() => {
+    if (state.isActive && !TutorialLayer) {
+      const loadTutorialLayer = async () => {
+        try {
+          // @ts-ignore - Dynamic import works at runtime despite TypeScript linter warning
+          const { TutorialLayer: LayerComponent } = await import('./tutorial-layer');
+          setTutorialLayer(() => LayerComponent);
+        } catch (error) {
+          debug.error('Failed to load TutorialLayer:', error);
+        }
+      };
+
+      loadTutorialLayer();
+    }
+  }, [state.isActive, TutorialLayer]);
 
   const dispatch = useCallback((action: TutorialAction) => {
     // Don't process actions during SSR

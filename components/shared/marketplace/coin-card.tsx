@@ -60,6 +60,7 @@ export function CoinCard({
           loading={priority || index < 4 ? 'eager' : 'lazy'}
           placeholder="blur"
           blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyatNeaSmCGGmclSCtjfJeciVgI6iqOYdvdKyMIpwGFLKOYoJEMLhN/fgA1A8jqCrLhcOwrGKE8nVFSM8nQHHNiNj/eH9uVGqjCeFLpLZGAGGFcU1Xzyl4MXJqM8IhFgPsE/wOJjWZDd3KdKyMTNvQvE2adKLGKE8nVHPnXL2aVg5K1C8T2sKdWbvqnmTaZEUgVNJlnlJKnkrUJbMfccfaYo4/8VAP1Qz8wm9jHdAHxj6zU"
+          unoptimized={false} // Enable Next.js optimization for better mobile performance
           onLoad={(e) => {
             // Fade in effect after load
             e.currentTarget.style.opacity = '1';

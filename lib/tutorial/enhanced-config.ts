@@ -164,7 +164,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "Perfect! You're now logged in. Let's check out your portfolio. Click on 'My Portfolio' in the sidebar.",
     targetElementSelector: '[data-tutorial-id="sidebar-portfolio-link"]',
     mobileTargetSelector: '[data-tutorial-id="mobile-portfolio-widget"]',
-    mobileContent: "Perfect! You're now logged in. Let's check out your portfolio. Tap on your portfolio card below to view your investments.",
+    mobileContent: "Perfect! You're now logged in. Let's check out your portfolio. Tap on your portfolio card to view your investments.",
     promptPlacement: 'right',
     mobilePromptPlacement: 'bottom',
     isModal: false,
@@ -449,11 +449,9 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     promptPlacement: 'top',
     mobilePromptPlacement: 'bottom',
     isModal: false,
-    overlayType: 'spotlight',
+    overlayType: 'transparent', // Changed from 'spotlight' to 'transparent'
     showNextButton: false,
     showPreviousButton: false,
-    spotlightPadding: 20,
-    mobileSpotlightPadding: 24,
     waitForElement: true,
     zIndexOverrides: [
       {

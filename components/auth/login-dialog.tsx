@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import Image from "next/image"
 import { useTutorial } from '@/lib/tutorial/ephemeral-provider'
+import { debug } from '@/lib/utils/debug'
 import React from 'react'
 
 export function LoginDialog() {
@@ -14,7 +15,7 @@ export function LoginDialog() {
   const [isLoading, setIsLoading] = useState(false)
 
   // Debug logging
-  console.log('LoginDialog render:', { 
+  debug.log('LoginDialog render:', { 
     showLoginDialog, 
     isTutorialActive: state.isActive, 
     activeStepId: state.steps[state.currentStepIndex]?.id 
@@ -25,7 +26,7 @@ export function LoginDialog() {
     if (showLoginDialog && state.isActive) {
       const currentStep = state.steps[state.currentStepIndex];
       if (currentStep?.id === 'login-prompt') {
-        console.log('Login dialog opened during login-prompt step - advancing to google-login-button step');
+        debug.log('Login dialog opened during login-prompt step - advancing to google-login-button step');
         setTimeout(() => {
           dispatch({ type: 'NEXT_STEP' });
         }, 200); // Reduced delay to better sync with dialog appearance
@@ -45,13 +46,13 @@ export function LoginDialog() {
       const currentStep = state.steps[state.currentStepIndex];
       if (state.isActive) {
         if (currentStep?.id === 'google-login-button') {
-          console.log('Google login button clicked during tutorial - advancing from google-login-button step')
+          debug.log('Google login button clicked during tutorial - advancing from google-login-button step')
           dispatch({ type: 'NEXT_STEP' });
         } else if (currentStep?.id === 'login-prompt') {
-          console.log('Login completed during login-prompt step - advancing to login-completion')
+          debug.log('Login completed during login-prompt step - advancing to login-completion')
           dispatch({ type: 'NEXT_STEP' });
         } else {
-          console.log('Login completed during tutorial, auto-detect should handle advancement')
+          debug.log('Login completed during tutorial, auto-detect should handle advancement')
         }
       }
     }, 1500)

@@ -799,3 +799,33 @@ body[data-tutorial-step="add-funds-dialog-opened"] [data-slot="dialog-overlay"] 
     }
   }
 }
+
+/* Step-specific click blocking for coin selection */
+[data-tutorial-step="coin-selection-prompt"] [data-tutorial-id="mobile-portfolio-widget"] {
+  pointer-events: none !important;
+}
+
+/* Reduce Add Funds dialog spacing on mobile during tutorial to make room for prompts */
+@media (max-width: 1023px) {
+  [data-tutorial-step="select-payment-method"] [data-tutorial-id="add-funds-dialog"] .pb-2,
+  [data-tutorial-step="add-funds-dialog-opened"] [data-tutorial-id="add-funds-dialog"] .pb-2 {
+    padding-bottom: 0.25rem !important;
+  }
+  
+  [data-tutorial-step="select-payment-method"] [data-tutorial-id="add-funds-dialog"] .space-y-4,
+  [data-tutorial-step="add-funds-dialog-opened"] [data-tutorial-id="add-funds-dialog"] .space-y-4 {
+    row-gap: 0.75rem !important;
+  }
+  
+  [data-tutorial-step="select-payment-method"] [data-tutorial-id="add-funds-dialog"] .py-4,
+  [data-tutorial-step="add-funds-dialog-opened"] [data-tutorial-id="add-funds-dialog"] .py-4 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  /* Also reduce the space-y-2 for payment methods section */
+  [data-tutorial-step="select-payment-method"] [data-tutorial-id="payment-methods-section"].space-y-2,
+  [data-tutorial-step="add-funds-dialog-opened"] [data-tutorial-id="payment-methods-section"].space-y-2 {
+    row-gap: 0.25rem !important;
+  }
+}
