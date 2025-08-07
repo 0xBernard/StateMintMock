@@ -21,7 +21,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'fractional-ownership-intro',
     title: "Own Premium Collectibles, Fractionally",
-    content: "Unlike traditional markets where rare coins cost $100K+, StateMint lets you own shares of high-value collectibles starting from just a few dollars. You're about to experience how we're democratizing access to assets that historically returned 12-50% annually.",
+    content: "Unlike traditional markets where rare coins cost $100K+, StateMint lets you own shares of high-value collectibles starting from just a few dollars.",
     targetElementSelector: 'body',
     promptPlacement: 'center',
     isModal: true,
@@ -102,7 +102,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'google-login-button',
     title: "Sign In with Google",
-    content: "Perfect! The login dialog is now open. Click the 'Continue with Google' button to sign in and start trading.",
+    content: "Perfect! Click the 'Continue with Google' button to sign in and start trading.",
     targetElementSelector: '[data-tutorial-id="google-oauth-button"]',
     promptPlacement: 'bottom',
     mobilePromptPlacement: 'bottom',
@@ -164,7 +164,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     content: "Perfect! You're now logged in. Let's check out your portfolio. Click on 'My Portfolio' in the sidebar.",
     targetElementSelector: '[data-tutorial-id="sidebar-portfolio-link"]',
     mobileTargetSelector: '[data-tutorial-id="mobile-portfolio-widget"]',
-    mobileContent: "Perfect! You're now logged in. Let's check out your portfolio. Tap on your portfolio card to view your investments.",
+    mobileContent: "Perfect! You're now logged in. Let's check out your portfolio. Tap on the portfolio card to view your investments.",
     promptPlacement: 'right',
     mobilePromptPlacement: 'bottom',
     isModal: false,
@@ -219,7 +219,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     id: 'portfolio-overview',
     title: "Your Portfolio",
     content: "This is your portfolio. Here you can see the assets you own and manage your funds. We've started you out with shares of a few coins for this tutorial.",
-    mobileContent: "Your portfolio shows your coin investments. Click Next to continue.",
+    mobileContent: "Your portfolio shows your coin investments. Here you can see the assets you own and manage your funds. We've started you out with shares of a few coins for this tutorial.",
     targetElementSelector: '[data-tutorial-id="portfolio-coin-list-section"]',
     promptPlacement: 'top',
     mobilePromptPlacement: 'top', // Changed from 'bottom' to 'top' to avoid being hidden behind content
@@ -408,7 +408,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'deposit-confirmation',
-    title: "Deposit Successful! ✅",
+    title: "Deposit Successful!",
     content: "We use Coinbase Pay to handle deposits and withdrawals to your bank. You'll be able to send USDC to your wallet if you'd prefer.",
     targetElementSelector: 'body',
     promptPlacement: 'center',
@@ -499,7 +499,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'coin-detail-overview',
     title: "Coin Details Page",
-    content: "This is the coin detail page. Here you can analyze the investment opportunity. Let's start by examining the Order Book.",
+    content: "This is the coin's detail page. Here you can learn about a coin, history, and current orderbook. Let's start by examining the Order Book.",
     targetElementSelector: '[data-tutorial-id="order-book-content-area"]',
     promptPlacement: 'right',
     mobilePromptPlacement: 'top',
@@ -621,8 +621,8 @@ export const enhancedTutorialSteps: TutorialStep[] = [
   {
     id: 'purchase-widget-highlight',
     title: "Invest in Shares, Not Whole Coins",
-    content: "Now let's make your first investment! Use this trading widget to buy some shares. Enter the number of shares you want and optionally set a future sell price, then click the buy button.",
-    mobileContent: "Enter the number of shares you want in the field below, then tap the buy button to make your first investment!",
+    content: "Now let's make your first investment! Use this trading widget to buy some shares. Enter the number of shares you want and set a future sell price, then click the buy button.",
+    mobileContent: "Enter the number of shares you want in the field below and set a future sell price, then tap the buy button to make your first investment!",
     targetElementSelector: '[data-tutorial-id="buy-widget-container"]',
     promptPlacement: 'left', // Keep desktop as 'left' (original)
     mobilePromptPlacement: 'top', // Mobile uses 'top' to attach to top of buy widget
