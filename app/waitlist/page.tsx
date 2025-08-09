@@ -92,6 +92,10 @@ export default function WaitlistPage() {
                       <div className="w-2 h-2 bg-amber-400 rounded-full" />
                       <span>Portfolio tracking and advanced analytics</span>
                     </div>
+                    <div className="flex items-center gap-3 text-gray-400">
+                      <div className="w-2 h-2 bg-amber-400 rounded-full" />
+                      <span>Custom-trained AI integration using public and proprietary data sources</span>
+                    </div>
                   </div>
                 </div>
 
