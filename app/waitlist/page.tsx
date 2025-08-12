@@ -75,27 +75,14 @@ export default function WaitlistPage() {
                     Get exclusive early access to the most advanced platform for rare coin collection and trading.
                   </p>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                    <div className="flex items-center gap-3 text-gray-400">
-                      <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>Maximize liquidity and resale value</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-400">
-                      <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>Secure marketplace and expert authentication</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-400">
-                      <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>Significatly lower fees vs. all major platforms</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-400">
-                      <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>Portfolio tracking and advanced analytics</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-400">
-                      <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                      <span>Custom-trained AI integration using public and proprietary data sources</span>
-                    </div>
+                  <div className="pt-4">
+                    <ul className="mx-auto max-w-3xl px-3 sm:px-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 list-disc list-outside pl-6 marker:text-amber-400 text-gray-300 text-base md:text-lg">
+                      <li className="text-left">Maximize liquidity and resale value</li>
+                      <li className="text-left">Secure marketplace and expert authentication</li>
+                      <li className="text-left">Significantly lower fees vs. all major platforms</li>
+                      <li className="text-left">Portfolio tracking and advanced analytics</li>
+                      <li className="text-left">Custom-trained AI integration using public and proprietary data sources</li>
+                    </ul>
                   </div>
                 </div>
 

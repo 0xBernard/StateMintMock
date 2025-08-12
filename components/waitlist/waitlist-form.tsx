@@ -39,32 +39,48 @@ export function WaitlistForm() {
     }
 
     try {
+      // Get reCAPTCHA first (usually fast), then optimistically confirm to user
       const token = await executeRecaptcha('waitlist_submission');
-      const response = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, userType, capitalRange, token }),
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit. Please try again.');
-      }
-
+      // Optimistic confirmation right away
       toast({
         title: "You're on the list!",
         description: "We've received your submission. We'll be in touch soon.",
       });
+
+      const payload = { name, email, userType, capitalRange, token };
+
+      // Fire-and-forget the actual submission. If it fails, show a corrective toast.
+      void fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(async (resp) => {
+          let data: unknown = null;
+          try {
+            data = await resp.json();
+          } catch {
+            // ignore JSON parse errors from upstream
+          }
+          const errorMessage = (data && (data as any).error) as string | undefined;
+          if (!resp.ok || errorMessage) {
+            throw new Error(errorMessage || 'Submission failed. Please try again.');
+          }
+        })
+        .catch((err: unknown) => {
+          toast({
+            title: 'We could not confirm your signup',
+            description:
+              (err as Error)?.message || 'Please try again in a moment.',
+            variant: 'destructive',
+          });
+        });
+
+      // Reset form immediately for a snappy feel
       setName('');
       setEmail('');
       setCapitalRange('');
-    } catch (error) {
-      toast({
-        title: 'Uh oh! Something went wrong.',
-        description: (error as Error).message || 'There was a problem with your request.',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }
