@@ -1,15 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Image optimization
+  // Image optimization - DISABLED for memory efficiency
+  // Your images are already WebP, so server-side processing is unnecessary
   images: {
-    formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 31536000, // 1 year
+    unoptimized: true, // Serve images directly without server processing
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  
+  // Reduce memory usage for page rendering
+  poweredByHeader: false, // Remove X-Powered-By header
 
   // Performance optimizations
   experimental: {
@@ -117,7 +118,7 @@ const nextConfig: NextConfig = {
     },
   }),
 
-  // Headers for performance
+  // Headers for performance and reduced server load
   headers: async () => [
     {
       source: '/(.*)',
@@ -137,11 +138,31 @@ const nextConfig: NextConfig = {
       ],
     },
     {
+      // Static assets - aggressive caching
+      source: '/_next/static/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    },
+    {
       source: '/images/:path*',
       headers: [
         {
           key: 'Cache-Control',
           value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    },
+    {
+      // HTML pages - allow browser caching with revalidation
+      source: '/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=0, must-revalidate',
         },
       ],
     },

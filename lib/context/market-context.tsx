@@ -28,8 +28,16 @@ interface MarketContextType {
 
 const MarketContext = createContext<MarketContextType | undefined>(undefined);
 
-// Initialize market state from coins data
+// Lazy initialization cache
+let cachedInitialState: MarketState | null = null;
+
+// Initialize market state from coins data - cached for performance
 function initializeMarketState(): MarketState {
+  // Return cached state if available
+  if (cachedInitialState) {
+    return cachedInitialState;
+  }
+  
   const initialState: MarketState = {};
   
   coins.forEach(coin => {
@@ -52,6 +60,7 @@ function initializeMarketState(): MarketState {
     };
   });
 
+  cachedInitialState = initialState;
   return initialState;
 }
 

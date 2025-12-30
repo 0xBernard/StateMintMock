@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,19 @@ type CoinCardProps = CoinData & {
   priority?: boolean; // For above-the-fold loading
   index?: number;     // For determining loading priority
 };
+
+// Helper to get optimized image paths
+function getOptimizedImageSrc(originalPath: string) {
+  // Convert /images/coins/xxx.webp to optimized versions
+  const filename = originalPath.replace('/images/coins/', '').replace('.webp', '');
+  const base = `/images/coins/optimized/${filename}`;
+  
+  return {
+    src: `${base}-md.webp`, // Default/fallback
+    srcSet: `${base}-sm.webp 400w, ${base}-md.webp 800w, ${base}-lg.webp 1200w`,
+    sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
+  };
+}
 
 export function CoinCard({
   id,
@@ -50,26 +62,30 @@ export function CoinCard({
       onClick={handleCardClick}
     >
       <div className="relative aspect-[2/1] bg-black rounded-t-lg overflow-hidden">
-        <Image
-          src={image}
-          alt={`${name} collectible coin`}
-          fill
-          className="object-cover transition-opacity duration-300"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={priority || index < 4} // Prioritize first 4 images
-          loading={priority || index < 4 ? 'eager' : 'lazy'}
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyatNeaSmCGGmclSCtjfJeciVgI6iqOYdvdKyMIpwGFLKOYoJEMLhN/fgA1A8jqCrLhcOwrGKE8nVFSM8nQHHNiNj/eH9uVGqjCeFLpLZGAGGFcU1Xzyl4MXJqM8IhFgPsE/wOJjWZDd3KdKyMTNvQvE2adKLGKE8nVHPnXL2aVg5K1C8T2sKdWbvqnmTaZEUgVNJlnlJKnkrUJbMfccfaYo4/8VAP1Qz8wm9jHdAHxj6zU"
-          unoptimized={false} // Enable Next.js optimization for better mobile performance
-          onLoad={(e) => {
-            // Fade in effect after load
-            e.currentTarget.style.opacity = '1';
-          }}
-          onError={(e) => {
-            // Fallback for broken images
-            e.currentTarget.src = '/images/coin-placeholder.jpg';
-          }}
-        />
+        {(() => {
+          const optimized = getOptimizedImageSrc(image);
+          return (
+            <img
+              src={optimized.src}
+              srcSet={optimized.srcSet}
+              sizes={optimized.sizes}
+              alt={`${name} collectible coin`}
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+              loading={priority || index < 4 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={priority || index < 4 ? 'high' : 'auto'}
+              onError={(e) => {
+                // Fallback to original image if optimized version doesn't exist
+                const target = e.currentTarget;
+                if (!target.dataset.fallback) {
+                  target.dataset.fallback = 'true';
+                  target.srcset = '';
+                  target.src = image;
+                }
+              }}
+            />
+          );
+        })()}
         <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold uppercase ${rarityColors[rarity]}`}>
           {rarity}
         </div>

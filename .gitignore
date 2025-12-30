@@ -12,6 +12,9 @@
 /.next/
 /out/
 
+# generated optimized images (created at build time)
+/public/images/coins/optimized/
+
 # production
 /build
 

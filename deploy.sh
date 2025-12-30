@@ -17,6 +17,10 @@ echo "📦 Installing PM2..."
 npm install -g pm2
 
 # Install dependencies and build
+# This now automatically:
+# 1. Runs prebuild (optimize-images.js) - generates optimized images
+# 2. Runs next build
+# 3. Runs postbuild (copy-standalone-assets.js) - copies to standalone
 echo "🔨 Building application..."
 npm ci
 npm run build
@@ -26,7 +30,7 @@ echo "🔄 Stopping existing processes..."
 pm2 stop all || true
 pm2 delete all || true
 
-# Start the application with PM2
+# Start the application with PM2 (uses standalone server for better memory efficiency)
 echo "🚀 Starting application..."
 pm2 start ecosystem.config.js
 
@@ -41,4 +45,8 @@ echo "📊 Use these commands to manage your app:"
 echo "   pm2 status          - Check app status"
 echo "   pm2 logs            - View logs"
 echo "   pm2 restart all     - Restart app"
-echo "   pm2 stop all        - Stop app" 
+echo "   pm2 stop all        - Stop app"
+echo ""
+echo "💡 Memory management:"
+echo "   pm2 monit           - Monitor memory usage"
+echo "   Server uses max 384MB heap, restarts at 512MB total" 

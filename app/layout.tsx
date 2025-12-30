@@ -12,7 +12,11 @@ import { Toaster } from 'sonner';
 import { Toaster as RadixToaster } from '@/components/ui/toaster';
 import { RecaptchaProvider } from '@/components/shared/recaptcha-provider';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: "swap", // Prevents FOIT - shows fallback font immediately
+  preload: true,
+});
 
 export const metadata: Metadata = {
   title: "StateMint",
