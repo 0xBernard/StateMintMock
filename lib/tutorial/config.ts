@@ -1,5 +1,6 @@
 import { type Route } from 'next';
 import { TutorialStep } from './types';
+import { debug } from '@/lib/utils/debug';
 
 // Update the default configuration for all steps to never show previous buttons
 const defaultStepConfig = {
@@ -44,7 +45,7 @@ export const tutorialSteps: TutorialStep[] = [
       preventBubbling: false,
     },
     onBeforeStep: async () => {
-      console.log('Setting up login step');
+      debug.log('Setting up login step');
       await new Promise(resolve => setTimeout(resolve, 1000));
       return new Promise(resolve => {
         // Check for the appropriate login button based on viewport
@@ -56,10 +57,10 @@ export const tutorialSteps: TutorialStep[] = [
         const checkElement = () => {
           const loginButton = document.querySelector(selector);
           if (loginButton) {
-            console.log(`Login button found (${isMobile ? 'mobile' : 'desktop'}), proceeding with tutorial`);
+            debug.log(`Login button found (${isMobile ? 'mobile' : 'desktop'}), proceeding with tutorial`);
             resolve();
           } else {
-            console.log(`Login button not found (${isMobile ? 'mobile' : 'desktop'}), waiting...`);
+            debug.log(`Login button not found (${isMobile ? 'mobile' : 'desktop'}), waiting...`);
             setTimeout(checkElement, 300);
           }
         };
@@ -67,7 +68,7 @@ export const tutorialSteps: TutorialStep[] = [
       });
     },
     onAfterStep: async () => {
-      console.log('Login step completed');
+      debug.log('Login step completed');
       return new Promise(resolve => setTimeout(resolve, 300));
     }
   },
@@ -88,7 +89,7 @@ export const tutorialSteps: TutorialStep[] = [
       autoAdvance: false
     },
     onBeforeStep: async () => {
-      console.log('Login completion step');
+      debug.log('Login completion step');
       return new Promise(resolve => setTimeout(resolve, 500));
     }
   },
@@ -166,10 +167,10 @@ export const tutorialSteps: TutorialStep[] = [
       autoAdvance: true,
     },
     onAfterStep: async () => {
-      console.log('[Tutorial Config] add-funds-button: onAfterStep triggered.');
+      debug.log('[Tutorial Config] add-funds-button: onAfterStep triggered.');
       const addFundsButtonInUI = document.querySelector('[data-tutorial-id="add-funds-button"]') as HTMLElement;
       if (addFundsButtonInUI) {
-        console.log('[Tutorial Config] add-funds-button: Programmatically clicking UI add-funds-button.');
+        debug.log('[Tutorial Config] add-funds-button: Programmatically clicking UI add-funds-button.');
         addFundsButtonInUI.click();
       } else {
         console.error('[Tutorial Config] add-funds-button: Could not find UI add-funds-button to click.');
@@ -196,7 +197,7 @@ export const tutorialSteps: TutorialStep[] = [
       preventBubbling: false
     },
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] add-funds-dialog-opened: onBeforeStep, waiting for auto-fill and dialog to settle.');
+      debug.log('[Tutorial Config] add-funds-dialog-opened: onBeforeStep, waiting for auto-fill and dialog to settle.');
       await new Promise(resolve => setTimeout(resolve, 400));
     },
   },
@@ -216,7 +217,7 @@ export const tutorialSteps: TutorialStep[] = [
       autoAdvance: true
     },
     onBeforeStep: async () => {
-      console.log("Showing deposit confirmation dialog with increased delay");
+      debug.log("Showing deposit confirmation dialog with increased delay");
       return new Promise(resolve => setTimeout(resolve, 2000));
     },
   },
@@ -293,7 +294,7 @@ export const tutorialSteps: TutorialStep[] = [
     onAfterStep: async () => {
       const tabButton = document.querySelector<HTMLElement>('[data-tutorial-id="order-book-tab-button"]');
       if (tabButton) {
-        console.log('[Tutorial] coin-detail-overview: Clicking Order Book tab.');
+        debug.log('[Tutorial] coin-detail-overview: Clicking Order Book tab.');
         tabButton.click();
       } else {
         console.error('[Tutorial] coin-detail-overview: Order Book tab button not found.');
@@ -327,13 +328,13 @@ export const tutorialSteps: TutorialStep[] = [
       } else if (!tabButton) {
          console.error('[Tutorial] coin-detail-order-book-explanation: Order Book tab button not found.');
       }
-      console.log('[Tutorial] coin-detail-order-book-explanation: onBeforeStep complete.');
+      debug.log('[Tutorial] coin-detail-order-book-explanation: onBeforeStep complete.');
       return new Promise((resolve) => setTimeout(resolve, 300));
     },
     onAfterStep: async () => {
       const tabButton = document.querySelector<HTMLElement>('[data-tutorial-id="details-tab-button"]');
       if (tabButton) {
-        console.log('[Tutorial] coin-detail-order-book-explanation: Clicking Details tab.');
+        debug.log('[Tutorial] coin-detail-order-book-explanation: Clicking Details tab.');
         tabButton.click();
       } else {
         console.error('[Tutorial] coin-detail-order-book-explanation: Details tab button not found.');
@@ -367,13 +368,13 @@ export const tutorialSteps: TutorialStep[] = [
       } else if (!tabButton) {
          console.error('[Tutorial] coin-detail-details-explanation: Details tab button not found.');
       }
-      console.log('[Tutorial] coin-detail-details-explanation: onBeforeStep complete.');
+      debug.log('[Tutorial] coin-detail-details-explanation: onBeforeStep complete.');
       return new Promise((resolve) => setTimeout(resolve, 300));
     },
     onAfterStep: async () => {
       const tabButton = document.querySelector<HTMLElement>('[data-tutorial-id="history-tab-button"]');
       if (tabButton) {
-        console.log('[Tutorial] coin-detail-details-explanation: Clicking History tab.');
+        debug.log('[Tutorial] coin-detail-details-explanation: Clicking History tab.');
         tabButton.click();
       } else {
         console.error('[Tutorial] coin-detail-details-explanation: History tab button not found.');
@@ -407,11 +408,11 @@ export const tutorialSteps: TutorialStep[] = [
       } else if (!tabButton) {
          console.error('[Tutorial] coin-detail-sale-history-explanation: History tab button not found.');
       }
-      console.log('[Tutorial] coin-detail-sale-history-explanation: onBeforeStep complete.');
+      debug.log('[Tutorial] coin-detail-sale-history-explanation: onBeforeStep complete.');
       return new Promise((resolve) => setTimeout(resolve, 300));
     },
     onAfterStep: async () => {
-      console.log('[Tutorial] coin-detail-sale-history-explanation: onAfterStep complete.');
+      debug.log('[Tutorial] coin-detail-sale-history-explanation: onAfterStep complete.');
       return new Promise((resolve) => setTimeout(resolve, 500)); // Proceed to next step in array (purchase-prompt)
     }
   },

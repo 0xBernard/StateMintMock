@@ -89,7 +89,7 @@ export const LazyCoinDetail = dynamic(
 );
 
 export const LazyPortfolioPage = dynamic(
-  () => import('@/app/portfolio/page'),
+  () => import('@/app/(app-shell)/portfolio/page'),
   {
     loading: () => (
       <div className="container mx-auto p-6 space-y-6">
@@ -102,7 +102,7 @@ export const LazyPortfolioPage = dynamic(
 );
 
 export const LazyMarketplacePage = dynamic(
-  () => import('@/app/marketplace/page'),
+  () => import('@/app/(app-shell)/marketplace/page'),
   {
     loading: () => (
       <div className="container mx-auto p-6">

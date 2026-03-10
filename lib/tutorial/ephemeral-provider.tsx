@@ -80,7 +80,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
     setState(prev => ({
       ...prev,
       sessionId: generateSessionId(),
-      isActive: autoStart // Only auto-start after hydration
+      isActive: autoStart || prev.isActive // Don't override a start triggered before this effect runs
     }));
 
     // Only load TutorialLayer when tutorial becomes active (lazy loading)

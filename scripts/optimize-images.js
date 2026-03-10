@@ -1,7 +1,7 @@
 /**
  * Image Optimization Script
  * Pre-generates optimized image sizes at build time to avoid runtime memory usage.
- * 
+ *
  * Run manually: node scripts/optimize-images.js
  * Or automatically via: npm run build (integrated into prebuild)
  */
@@ -14,31 +14,20 @@ let sharp;
 try {
   sharp = require('sharp');
 } catch (e) {
-  console.log('📦 Installing sharp for image optimization...');
+  console.log('Installing sharp for image optimization...');
   require('child_process').execSync('npm install sharp --save-dev', { stdio: 'inherit' });
   sharp = require('sharp');
 }
 
-// Configuration
 const CONFIG = {
-  // Source directory for original images
   sourceDir: path.join(__dirname, '../public/images/coins'),
-  
-  // Output directory for optimized images
   outputDir: path.join(__dirname, '../public/images/coins/optimized'),
-  
-  // Sizes to generate (width in pixels)
   sizes: [
-    { width: 400, suffix: 'sm' },   // Mobile cards
-    { width: 800, suffix: 'md' },   // Tablet / 2x mobile
-    { width: 1200, suffix: 'lg' },  // Desktop
+    { width: 400, suffix: 'sm' },
+    { width: 800, suffix: 'md' },
+    { width: 1200, suffix: 'lg' },
   ],
-  
-  // Quality settings
   webpQuality: 80,
-  
-  // Skip if optimized versions already exist and are newer than source
-  skipExisting: true,
 };
 
 async function optimizeImage(inputPath, outputDir, sizes) {
@@ -49,20 +38,10 @@ async function optimizeImage(inputPath, outputDir, sizes) {
     const outputFilename = `${filename}-${size.suffix}.webp`;
     const outputPath = path.join(outputDir, outputFilename);
 
-    // Check if we should skip this file
-    if (CONFIG.skipExisting && fs.existsSync(outputPath)) {
-      const inputStat = fs.statSync(inputPath);
-      const outputStat = fs.statSync(outputPath);
-      if (outputStat.mtime > inputStat.mtime) {
-        results.push({ size: size.suffix, skipped: true });
-        continue;
-      }
-    }
-
     try {
       await sharp(inputPath)
         .resize(size.width, null, {
-          withoutEnlargement: true, // Don't upscale smaller images
+          withoutEnlargement: true,
           fit: 'inside',
         })
         .webp({ quality: CONFIG.webpQuality })
@@ -78,22 +57,30 @@ async function optimizeImage(inputPath, outputDir, sizes) {
 }
 
 async function main() {
-  console.log('🖼️  Image Optimization Script');
-  console.log('============================\n');
+  console.log('Image Optimization Script');
+  console.log('=========================\n');
 
-  // Check source directory exists
   if (!fs.existsSync(CONFIG.sourceDir)) {
-    console.error(`❌ Source directory not found: ${CONFIG.sourceDir}`);
+    console.error(`Source directory not found: ${CONFIG.sourceDir}`);
     process.exit(1);
   }
 
-  // Create output directory
   if (!fs.existsSync(CONFIG.outputDir)) {
     fs.mkdirSync(CONFIG.outputDir, { recursive: true });
-    console.log(`📁 Created output directory: ${CONFIG.outputDir}\n`);
+    console.log(`Created output directory: ${CONFIG.outputDir}\n`);
   }
 
-  // Get all WebP images
+  // Always rebuild optimized assets to avoid stale image/name pairings.
+  const staleAssets = fs.readdirSync(CONFIG.outputDir).filter(
+    file => file.endsWith('.webp') || file === 'manifest.json'
+  );
+  for (const file of staleAssets) {
+    fs.unlinkSync(path.join(CONFIG.outputDir, file));
+  }
+  if (staleAssets.length > 0) {
+    console.log(`Cleared ${staleAssets.length} existing optimized assets\n`);
+  }
+
   const images = fs.readdirSync(CONFIG.sourceDir)
     .filter(file => file.endsWith('.webp') && !file.includes('-sm') && !file.includes('-md') && !file.includes('-lg'));
 
@@ -105,7 +92,6 @@ async function main() {
   console.log(`Found ${images.length} images to process...\n`);
 
   let created = 0;
-  let skipped = 0;
   let errors = 0;
 
   for (const image of images) {
@@ -113,37 +99,31 @@ async function main() {
     process.stdout.write(`Processing: ${image}... `);
 
     const results = await optimizeImage(inputPath, CONFIG.outputDir, CONFIG.sizes);
-    
     const createdCount = results.filter(r => r.created).length;
-    const skippedCount = results.filter(r => r.skipped).length;
     const errorCount = results.filter(r => r.error).length;
 
     created += createdCount;
-    skipped += skippedCount;
     errors += errorCount;
 
     if (errorCount > 0) {
-      console.log(`⚠️  ${createdCount} created, ${errorCount} errors`);
-    } else if (skippedCount === results.length) {
-      console.log('⏭️  up to date');
+      console.log(`${createdCount} created, ${errorCount} errors`);
     } else {
-      console.log(`✅ ${createdCount} created`);
+      console.log(`${createdCount} created`);
     }
   }
 
-  console.log('\n============================');
-  console.log(`📊 Summary:`);
-  console.log(`   Created: ${created} images`);
-  console.log(`   Skipped: ${skipped} (already up to date)`);
+  console.log('\n=========================');
+  console.log('Summary:');
+  console.log(`  Created: ${created} images`);
   if (errors > 0) {
-    console.log(`   Errors:  ${errors}`);
+    console.log(`  Errors:  ${errors}`);
   }
-  console.log('============================\n');
+  console.log('=========================\n');
 
   // Generate a manifest file for easy importing
   const manifest = {};
   const optimizedFiles = fs.readdirSync(CONFIG.outputDir).filter(f => f.endsWith('.webp'));
-  
+
   for (const file of optimizedFiles) {
     const match = file.match(/^(.+)-(sm|md|lg)\.webp$/);
     if (match) {
@@ -157,8 +137,7 @@ async function main() {
 
   const manifestPath = path.join(CONFIG.outputDir, 'manifest.json');
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-  console.log(`📄 Generated manifest: ${manifestPath}`);
+  console.log(`Generated manifest: ${manifestPath}`);
 }
 
 main().catch(console.error);
-

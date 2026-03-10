@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import { TutorialContextValue, ElementTrackingState } from './types';
 import { ZIndexManager } from './z-index-manager';
+import { debug } from '@/lib/utils/debug';
 
 // Utility function to generate session IDs
 export function generateSessionId(): string {
@@ -93,13 +94,16 @@ class TutorialPerformanceMonitor {
   }
 
   logMetrics() {
+    if (process.env.NODE_ENV !== 'development') {
+      return
+    }
+
     const metrics = this.getMetrics()
-    console.group('🚀 Tutorial Performance Metrics')
-    console.log(`📊 DOM Queries: ${metrics.domQueries} (${metrics.domQueriesPerSecond.toFixed(2)}/sec)`)
-    console.log(`🎨 React Renders: ${metrics.renderCount} (${metrics.rendersPerSecond.toFixed(2)}/sec)`)
-    console.log(`👀 Active Observers: ${metrics.observerCount}`)
-    console.log(`⏱️ Runtime: ${(metrics.runtime / 1000).toFixed(2)}s`)
-    console.groupEnd()
+    debug.log('Tutorial Performance Metrics')
+    debug.log(`DOM Queries: ${metrics.domQueries} (${metrics.domQueriesPerSecond.toFixed(2)}/sec)`)
+    debug.log(`React Renders: ${metrics.renderCount} (${metrics.rendersPerSecond.toFixed(2)}/sec)`)
+    debug.log(`Active Observers: ${metrics.observerCount}`)
+    debug.log(`Runtime: ${(metrics.runtime / 1000).toFixed(2)}s`)
   }
 
   reset() {

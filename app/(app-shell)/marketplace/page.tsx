@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/shared/layout/header';
 import { Sidebar } from '@/components/shared/layout/sidebar';
 import { CoinCard } from '@/components/shared/marketplace/coin-card';
 import { coins } from '@/lib/data/coins';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTutorial } from '@/lib/tutorial/ephemeral-provider';
 import { useAuth } from '@/lib/context/auth-context';
 import { usePortfolio } from '@/lib/context/portfolio-context';
 import { useFinancial } from '@/lib/context/financial-context';
@@ -29,7 +27,6 @@ function calculatePercentageChange(current: number, original: number) {
 
 export default function MarketplacePage() {
   const router = useRouter();
-  const { state, dispatch, currentStep } = useTutorial();
   const { isAuthenticated, user, setShowLoginDialog } = useAuth();
   const { getPortfolioValue, getUnrealizedPL } = usePortfolio();
   const { availableBalance } = useFinancial();
@@ -58,7 +55,6 @@ export default function MarketplacePage() {
                     className="bg-zinc-900/50 rounded-lg p-4 border border-amber-600/30 cursor-pointer hover:bg-zinc-900/70 transition-colors relative"
                     data-tutorial-id="mobile-portfolio-widget"
                     onClick={() => {
-                      console.log('Mobile portfolio widget clicked, navigating to portfolio');
                       router.push('/portfolio');
                     }}
                   >
@@ -145,8 +141,8 @@ export default function MarketplacePage() {
 
               <div className="flex justify-center">
                 <div data-tutorial-id="marketplace-coin-list-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 max-w-sm sm:max-w-none">
-                {coins.map((coin) => (
-                  <CoinCard key={coin.id} {...coin} />
+                {coins.map((coin, index) => (
+                  <CoinCard key={coin.id} {...coin} index={index} priority={index < 3} />
                 ))}
                 </div>
               </div>

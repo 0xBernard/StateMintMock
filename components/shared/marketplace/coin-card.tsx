@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CoinData } from '@/lib/data/coins';
 import { calculateMarketMetrics, formatSharePrice, formatPriceChange } from '@/lib/data/market';
+import { withAssetVersion, withEncodedAssetVersion } from '@/lib/utils/asset-version';
 
 type CoinCardProps = CoinData & {
   priority?: boolean; // For above-the-fold loading
@@ -14,13 +15,17 @@ type CoinCardProps = CoinData & {
 
 // Helper to get optimized image paths
 function getOptimizedImageSrc(originalPath: string) {
-  // Convert /images/coins/xxx.webp to optimized versions
-  const filename = originalPath.replace('/images/coins/', '').replace('.webp', '');
-  const base = `/images/coins/optimized/${filename}`;
+  // Convert /images/coins/xxx.webp to optimized versions.
+  // encodeURIComponent is required because coin image filenames include spaces.
+  const filename = originalPath
+    .replace(/^\/images\/coins\//, '')
+    .replace(/\.webp$/i, '');
+  const encodedFilename = encodeURIComponent(filename);
+  const base = `/images/coins/optimized/${encodedFilename}`;
   
   return {
-    src: `${base}-md.webp`, // Default/fallback
-    srcSet: `${base}-sm.webp 400w, ${base}-md.webp 800w, ${base}-lg.webp 1200w`,
+    src: withAssetVersion(`${base}-md.webp`), // Default/fallback
+    srcSet: `${withAssetVersion(`${base}-sm.webp`)} 400w, ${withAssetVersion(`${base}-md.webp`)} 800w, ${withAssetVersion(`${base}-lg.webp`)} 1200w`,
     sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
   };
 }
@@ -36,11 +41,14 @@ export function CoinCard({
   owners,
   rarity,
   priority = false,
-  index = 0,
+  index = Number.MAX_SAFE_INTEGER,
 }: CoinCardProps) {
   const router = useRouter();
   const soldPercentage = (soldShares / totalShares) * 100;
   const metrics = calculateMarketMetrics(market);
+  const optimized = getOptimizedImageSrc(image);
+  const fallbackImageSrc = withEncodedAssetVersion(image);
+  const shouldPrioritizeImage = priority || index < 3;
 
   const rarityColors = {
     scarce: 'bg-zinc-800 text-zinc-200',
@@ -62,30 +70,25 @@ export function CoinCard({
       onClick={handleCardClick}
     >
       <div className="relative aspect-[2/1] bg-black rounded-t-lg overflow-hidden">
-        {(() => {
-          const optimized = getOptimizedImageSrc(image);
-          return (
-            <img
-              src={optimized.src}
-              srcSet={optimized.srcSet}
-              sizes={optimized.sizes}
-              alt={`${name} collectible coin`}
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
-              loading={priority || index < 4 ? 'eager' : 'lazy'}
-              decoding="async"
-              fetchPriority={priority || index < 4 ? 'high' : 'auto'}
-              onError={(e) => {
-                // Fallback to original image if optimized version doesn't exist
-                const target = e.currentTarget;
-                if (!target.dataset.fallback) {
-                  target.dataset.fallback = 'true';
-                  target.srcset = '';
-                  target.src = image;
-                }
-              }}
-            />
-          );
-        })()}
+        <img
+          src={optimized.src}
+          srcSet={optimized.srcSet}
+          sizes={optimized.sizes}
+          alt={`${name} collectible coin`}
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+          loading={shouldPrioritizeImage ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={shouldPrioritizeImage ? 'high' : 'auto'}
+          onError={(e) => {
+            // Fallback to original image if optimized version doesn't exist
+            const target = e.currentTarget;
+            if (!target.dataset.fallback) {
+              target.dataset.fallback = 'true';
+              target.srcset = '';
+              target.src = fallbackImageSrc;
+            }
+          }}
+        />
         <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold uppercase ${rarityColors[rarity]}`}>
           {rarity}
         </div>

@@ -2,22 +2,17 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { useTutorial } from '@/lib/tutorial/ephemeral-provider';
+import { clearTutorialAutoStart, queueTutorialAutoStart } from '@/lib/tutorial/autostart';
 
 export function HomeButtons() {
   const router = useRouter();
-  const { dispatch } = useTutorial();
 
   const handleModeSelect = (selectedMode: 'demo' | 'tutorial') => {
     if (selectedMode === 'tutorial') {
-      console.log('Tutorial mode selected, navigating to marketplace...');
+      queueTutorialAutoStart();
       router.push('/marketplace');
-      
-      setTimeout(() => {
-        console.log('Starting tutorial...');
-        dispatch({ type: 'START_TUTORIAL' });
-      }, 2000);
     } else {
+      clearTutorialAutoStart();
       router.push('/marketplace');
     }
   };

@@ -50,6 +50,18 @@ pnpm dev
 
 4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Production Notes
+
+- Asset cache versioning:
+  - Public coin image URLs are cache-busted using `NEXT_PUBLIC_ASSET_VERSION`.
+  - If you do not set it, the build falls back to a build-time timestamp.
+  - Recommended: set `NEXT_PUBLIC_ASSET_VERSION` to your git commit SHA in CI/CD.
+
+- Nginx reverse proxy + static serving:
+  - Use `scripts/nginx-statemint.conf.template` to serve `/_next/static` and `/images` directly from disk.
+  - `deploy.sh` now installs and configures Nginx automatically using that template.
+  - Brotli directives are included as comments in the template; enable them only if your Nginx build supports Brotli modules.
+
 ## Project Structure
 
 ```

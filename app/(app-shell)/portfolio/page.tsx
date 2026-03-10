@@ -14,6 +14,7 @@ import { ArrowUpRight, ArrowDownRight, DollarSign, Lock, Plus } from 'lucide-rea
 import { Header } from '@/components/shared/layout/header';
 import { Sidebar } from '@/components/shared/layout/sidebar';
 import { Button } from '@/components/ui/button';
+import { withEncodedAssetVersion } from '@/lib/utils/asset-version';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-US', {
@@ -40,7 +41,6 @@ export default function PortfolioPage() {
   // Auto-advance tutorial if we're on portfolio-navigation step and already on portfolio page
   useEffect(() => {
     if (state.isActive && currentStep?.id === 'portfolio-navigation') {
-      console.log('Portfolio page loaded while on portfolio-navigation step - auto-advancing');
       // Small delay to ensure the step is fully initialized
       setTimeout(() => {
         dispatch({ type: 'NEXT_STEP' });
@@ -107,8 +107,6 @@ export default function PortfolioPage() {
                 {/* Mobile Add Funds Button */}
                 <Button
                   onClick={() => {
-                    console.log('[Portfolio] Mobile Add Funds button clicked - tutorial active:', state.isActive, 'current step:', currentStep?.id);
-                    
                     // Just open the dialog - let the dialog handle tutorial advancement
                     openAddFundsDialog();
                   }}
@@ -185,7 +183,7 @@ export default function PortfolioPage() {
                           >
                             <div className="flex items-center space-x-3 sm:space-x-4 w-full rounded-lg border p-3 sm:p-4 min-w-0 overflow-hidden">
                               <Avatar className="h-12 w-16 sm:h-16 sm:w-24 rounded-lg">
-                                <AvatarImage src={coin.image} alt={coin.name} className="object-cover" />
+                                <AvatarImage src={withEncodedAssetVersion(coin.image)} alt={coin.name} className="object-cover" />
                                 <AvatarFallback className="rounded-lg text-xs sm:text-sm">{coin.name[0]}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 space-y-1 text-left min-w-0">

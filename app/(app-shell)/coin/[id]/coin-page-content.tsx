@@ -19,7 +19,6 @@ export function CoinPageContent({ id }: CoinPageContentProps) {
   // Auto-advance tutorial if we're on coin-selection-prompt step and already on coin detail page
   useEffect(() => {
     if (state.isActive && currentStep?.id === 'coin-selection-prompt') {
-      console.log('Coin detail page loaded while on coin-selection-prompt step - auto-advancing');
       // Small delay to ensure the step is fully initialized
       setTimeout(() => {
         dispatch({ type: 'NEXT_STEP' });

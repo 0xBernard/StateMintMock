@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { TutorialProvider } from '@/lib/tutorial/ephemeral-provider';
 import { getTutorialSteps } from '@/lib/tutorial/enhanced-config';
 
@@ -12,7 +13,7 @@ export function ClientTutorialWrapper({
   children, 
   mode = 'demo'
 }: ClientTutorialWrapperProps) {
-  const tutorialSteps = getTutorialSteps(mode);
+  const tutorialSteps = useMemo(() => getTutorialSteps(mode), [mode]);
 
   return (
     <TutorialProvider steps={tutorialSteps}>

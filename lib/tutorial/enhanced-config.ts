@@ -1,6 +1,7 @@
 import { type Route } from 'next';
 import { TutorialStep, ZIndexOverride } from './types';
 import { Work_Sans } from 'next/font/google';
+import { debug } from '@/lib/utils/debug';
 
 // Enhanced tutorial steps with z-index management
 export const enhancedTutorialSteps: TutorialStep[] = [
@@ -70,17 +71,17 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       preventBubbling: false,
     },
     onBeforeStep: async () => {
-      console.log('Setting up login step');
+      debug.log('Setting up login step');
       await new Promise(resolve => setTimeout(resolve, 1000));
       return new Promise<void>(resolve => {
         const checkElement = () => {
           const loginButton = document.querySelector('[data-tutorial-id="header-login-button"]');
           const mobileLoginButton = document.querySelector('[data-tutorial-id="marketplace-portfolio-login-button"]');
           if (loginButton || mobileLoginButton) {
-            console.log('Login button found (desktop or mobile), proceeding with tutorial');
+            debug.log('Login button found (desktop or mobile), proceeding with tutorial');
             resolve();
           } else {
-            console.log('Login button not found, waiting...');
+            debug.log('Login button not found, waiting...');
             setTimeout(checkElement, 300);
           }
         };
@@ -88,12 +89,12 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       });
     },
     onAfterStep: async () => {
-      console.log('Login step completed, advancement handled by login dialog');
+      debug.log('Login step completed, advancement handled by login dialog');
       // The login dialog will advance the step directly when login completes
       // This is just a fallback in case the dialog doesn't advance for some reason
       return new Promise<void>(resolve => {
         setTimeout(() => {
-          console.log('Login step onAfterStep fallback completed');
+          debug.log('Login step onAfterStep fallback completed');
           resolve();
         }, 100);
       });
@@ -120,17 +121,17 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       preventBubbling: false,
     },
     onBeforeStep: async () => {
-      console.log('Setting up Google login button step, waiting for dialog to be ready');
+      debug.log('Setting up Google login button step, waiting for dialog to be ready');
       // No initial delay - immediately check for elements
       return new Promise<void>(resolve => {
         const checkElement = () => {
           const googleButton = document.querySelector('[data-tutorial-id="google-oauth-button"]');
           const loginDialog = document.querySelector('[data-tutorial-id="login-dialog"]');
           if (googleButton && loginDialog) {
-            console.log('Google login button and dialog found, proceeding with tutorial');
+            debug.log('Google login button and dialog found, proceeding with tutorial');
             resolve();
           } else {
-            console.log('Google login button or dialog not found, waiting...', { googleButton: !!googleButton, loginDialog: !!loginDialog });
+            debug.log('Google login button or dialog not found, waiting...', { googleButton: !!googleButton, loginDialog: !!loginDialog });
             setTimeout(checkElement, 50); // Faster polling - check every 50ms
           }
         };
@@ -138,7 +139,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       });
     },
     onAfterStep: async () => {
-      console.log('Google login button clicked, login process should begin');
+      debug.log('Google login button clicked, login process should begin');
       // The login dialog will handle the actual login and advancement
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -154,7 +155,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     showNextButton: true,
     showPreviousButton: false,
     onBeforeStep: async () => {
-      console.log('Showing login completion step');
+      debug.log('Showing login completion step');
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   },
@@ -192,7 +193,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       autoAdvance: true,
     },
     onBeforeStep: async () => {
-      console.log('Setting up portfolio navigation step');
+      debug.log('Setting up portfolio navigation step');
       await new Promise(resolve => setTimeout(resolve, 500));
       return new Promise<void>(resolve => {
         const checkElement = () => {
@@ -200,10 +201,10 @@ export const enhancedTutorialSteps: TutorialStep[] = [
           const mobilePortfolioWidget = document.querySelector('[data-tutorial-id="mobile-portfolio-widget"]');
           
           if (portfolioLink || mobilePortfolioWidget) {
-            console.log('Portfolio element found (desktop or mobile), proceeding with tutorial');
+            debug.log('Portfolio element found (desktop or mobile), proceeding with tutorial');
             resolve();
           } else {
-            console.log('Portfolio element not found, waiting...');
+            debug.log('Portfolio element not found, waiting...');
             setTimeout(checkElement, 300);
           }
         };
@@ -322,7 +323,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       preventBubbling: false,
     },
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] add-funds-button: onBeforeStep - waiting for button to be ready.');
+      debug.log('[Tutorial Config] add-funds-button: onBeforeStep - waiting for button to be ready.');
       await new Promise(resolve => setTimeout(resolve, 500));
     },
   },
@@ -359,7 +360,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       }
     ],
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] select-payment-method: onBeforeStep - waiting for dialog to be ready.');
+      debug.log('[Tutorial Config] select-payment-method: onBeforeStep - waiting for dialog to be ready.');
       await new Promise(resolve => setTimeout(resolve, 300));
     },
   },
@@ -402,7 +403,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
     ],
     // No action - let the user interact with the dialog naturally
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] add-funds-dialog-opened: onBeforeStep, waiting for dialog to settle.');
+      debug.log('[Tutorial Config] add-funds-dialog-opened: onBeforeStep, waiting for dialog to settle.');
       await new Promise(resolve => setTimeout(resolve, 400));
     },
   },
@@ -437,7 +438,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       autoAdvance: false, // Don't auto-advance, we'll handle it manually
     },
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] marketplace-navigation: onBeforeStep - preparing navigation');
+      debug.log('[Tutorial Config] marketplace-navigation: onBeforeStep - preparing navigation');
       await new Promise(resolve => setTimeout(resolve, 200));
     },
   },
@@ -471,7 +472,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       autoAdvance: true,
     },
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] coin-selection-prompt: onBeforeStep - waiting for marketplace to be ready.');
+      debug.log('[Tutorial Config] coin-selection-prompt: onBeforeStep - waiting for marketplace to be ready.');
       // Wait longer to ensure marketplace page is fully loaded and rendered
       await new Promise(resolve => setTimeout(resolve, 1000));
     },
@@ -524,13 +525,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       autoAdvance: true,
     },
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] coin-detail-overview: onBeforeStep - switching to order book tab.');
+      debug.log('[Tutorial Config] coin-detail-overview: onBeforeStep - switching to order book tab.');
       
       // Click the order book tab to ensure it's active
       const orderBookTabButton = document.querySelector('[data-tutorial-id="order-book-tab-button"]');
       if (orderBookTabButton) {
         (orderBookTabButton as HTMLElement).click();
-        console.log('[Tutorial Config] Clicked order book tab button');
+        debug.log('[Tutorial Config] Clicked order book tab button');
       }
       
       // Wait for tab content to be visible and bounds to be calculated
@@ -564,13 +565,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       autoAdvance: true,
     },
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] coin-history-tab-highlight: onBeforeStep - switching to history tab.');
+      debug.log('[Tutorial Config] coin-history-tab-highlight: onBeforeStep - switching to history tab.');
       
       // Click the history tab to make content visible
       const historyTabButton = document.querySelector('[data-tutorial-id="history-tab-button"]');
       if (historyTabButton) {
         (historyTabButton as HTMLElement).click();
-        console.log('[Tutorial Config] Clicked history tab button');
+        debug.log('[Tutorial Config] Clicked history tab button');
       }
       
       // Wait for tab content to be visible and bounds to be calculated
@@ -604,13 +605,13 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       autoAdvance: true,
     },
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] coin-details-tab-highlight: onBeforeStep - switching to details tab.');
+      debug.log('[Tutorial Config] coin-details-tab-highlight: onBeforeStep - switching to details tab.');
       
       // Click the details tab to make content visible
       const detailsTabButton = document.querySelector('[data-tutorial-id="details-tab-button"]');
       if (detailsTabButton) {
         (detailsTabButton as HTMLElement).click();
-        console.log('[Tutorial Config] Clicked details tab button');
+        debug.log('[Tutorial Config] Clicked details tab button');
       }
       
       // Wait for tab content to be visible and bounds to be calculated
@@ -641,7 +642,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
       }
     ],
     onBeforeStep: async () => {
-      console.log('[Tutorial Config] purchase-widget-highlight: onBeforeStep - ensuring widget is visible on mobile');
+      debug.log('[Tutorial Config] purchase-widget-highlight: onBeforeStep - ensuring widget is visible on mobile');
       
       // On mobile, ensure the buy widget is scrolled into view
       const isMobile = window.innerWidth < 1024;
@@ -650,7 +651,7 @@ export const enhancedTutorialSteps: TutorialStep[] = [
         
         const buyWidget = document.querySelector('[data-tutorial-id="buy-widget-container"]');
         if (buyWidget) {
-          console.log('[Tutorial Config] Scrolling buy widget into view on mobile');
+          debug.log('[Tutorial Config] Scrolling buy widget into view on mobile');
           buyWidget.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'center',

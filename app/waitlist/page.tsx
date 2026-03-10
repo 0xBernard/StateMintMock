@@ -2,6 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { WaitlistForm } from '@/components/waitlist/waitlist-form';
 import { Button } from '@/components/ui/button';
+import { Toaster as RadixToaster } from '@/components/ui/toaster';
+import { RecaptchaProvider } from '@/components/shared/recaptcha-provider';
 
 export default function WaitlistPage() {
   return (
@@ -109,7 +111,9 @@ export default function WaitlistPage() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 rounded-2xl blur-xl transform rotate-6" />
                     <div className="relative">
-                      <WaitlistForm />
+                      <RecaptchaProvider>
+                        <WaitlistForm />
+                      </RecaptchaProvider>
                     </div>
                   </div>
                 </div>
@@ -122,6 +126,7 @@ export default function WaitlistPage() {
 
       {/* Bottom decorative elements */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none" />
+      <RadixToaster />
     </div>
   );
 } 

@@ -1,3 +1,6 @@
+import React from 'react';
+import { debug } from '@/lib/utils/debug';
+
 /**
  * Mobile detection and responsive utilities for tutorial system
  */
@@ -26,7 +29,7 @@ export function useMobileDetection() {
   React.useEffect(() => {
     function handleResize() {
       const newIsMobile = isMobileViewport();
-      console.log('[Mobile Detection] Resize detected:', {
+      debug.log('[Mobile Detection] Resize detected:', {
         width: window.innerWidth,
         isMobile: newIsMobile,
         breakpoint: MOBILE_BREAKPOINT
@@ -36,7 +39,7 @@ export function useMobileDetection() {
 
     // Initial check on mount
     const initialIsMobile = isMobileViewport();
-    console.log('[Mobile Detection] Initial mount:', {
+    debug.log('[Mobile Detection] Initial mount:', {
       width: window.innerWidth,
       isMobile: initialIsMobile,
       breakpoint: MOBILE_BREAKPOINT
@@ -150,6 +153,3 @@ export async function waitForMobileNavigation(): Promise<void> {
     checkNavigation();
   });
 }
-
-// Re-export React for the hook
-import React from 'react'; 

@@ -20,6 +20,7 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, Users, History, AlertTriangle
 import { useToast } from "@/components/ui/use-toast";
 import { calculatePurchaseBreakdown } from '@/lib/data/market';
 import { formatNumber, formatCurrency, safeMultiply, formatPercentage, parseNumberWithCommas, formatNumberInput } from '@/lib/utils/number-formatting';
+import { withEncodedAssetVersion } from '@/lib/utils/asset-version';
 
 interface CoinDetailProps {
   coin: CoinData;
@@ -469,7 +470,7 @@ export function CoinDetail({ coin }: CoinDetailProps) {
       <div className="flex flex-col md:flex-row gap-6 items-start">
         <div className="relative w-full md:w-80 aspect-[2/1] rounded-lg overflow-hidden bg-black/20">
           <Image
-            src={coin.image}
+            src={withEncodedAssetVersion(coin.image)}
             alt={coin.name}
             fill
             className="object-contain"

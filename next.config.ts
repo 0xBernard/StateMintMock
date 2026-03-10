@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+const assetVersion =
+  process.env.NEXT_PUBLIC_ASSET_VERSION ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.SOURCE_VERSION ||
+  Date.now().toString();
+
 const nextConfig: NextConfig = {
   // Image optimization - DISABLED for memory efficiency
   // Your images are already WebP, so server-side processing is unnecessary
@@ -106,6 +112,9 @@ const nextConfig: NextConfig = {
   },
 
   // Compiler optimizations (swcMinify is default in Next.js 15+)
+  env: {
+    NEXT_PUBLIC_ASSET_VERSION: assetVersion,
+  },
   
   // Static optimization
   output: 'standalone',
