@@ -27,6 +27,11 @@ pm2 start ecosystem.config.js --update-env
 pm2 save
 pm2 startup
 
+# Warm up the server so the first real visitor doesn't hit a cold start
+echo "Warming up the server..."
+sleep 3
+curl -sf -o /dev/null http://localhost:3000 || echo "Warm-up request failed (server may still be starting)"
+
 # Configure Nginx as reverse proxy and static asset server
 NGINX_TEMPLATE="$APP_ROOT/scripts/nginx-statemint.conf.template"
 if [ -f "$NGINX_TEMPLATE" ]; then

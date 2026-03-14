@@ -32,71 +32,10 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-avatar',
       '@radix-ui/react-toast'
     ],
-    optimizeCss: true,
   },
 
-  // Webpack optimizations
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Optimize bundle splitting
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // Next.js framework chunk
-          framework: {
-            chunks: 'all',
-            name: 'framework',
-            test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
-            priority: 40,
-            enforce: true,
-          },
-          // Common libraries
-          lib: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'commons',
-            priority: 30,
-            minChunks: 2,
-            maxSize: 244000, // 244KB
-          },
-          // Radix UI components
-          radix: {
-            test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
-            name: 'radix',
-            priority: 35,
-            enforce: true,
-          },
-          // Lucide icons
-          icons: {
-            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
-            name: 'icons',
-            priority: 35,
-            enforce: true,
-          },
-          // Tutorial system
-          tutorial: {
-            test: /[\\/]lib[\\/]tutorial[\\/]/,
-            name: 'tutorial',
-            priority: 20,
-            minChunks: 1,
-          },
-          // Shared components
-          shared: {
-            test: /[\\/]components[\\/]shared[\\/]/,
-            name: 'shared',
-            priority: 20,
-            minChunks: 2,
-          },
-        },
-      };
-
-      // Tree shaking optimization
-      config.optimization.usedExports = true;
-      config.optimization.sideEffects = false;
-    }
-
-    // Bundle analyzer (only in development)
+  // Bundle analyzer (development only)
+  webpack: (config, { dev }) => {
     if (dev && process.env.ANALYZE === 'true') {
       const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
       config.plugins.push(
@@ -107,7 +46,6 @@ const nextConfig: NextConfig = {
         })
       );
     }
-
     return config;
   },
 
